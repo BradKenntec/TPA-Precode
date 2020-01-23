@@ -1,0 +1,191 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
+  <POU Name="PlixHandler" Id="{922d3b6a-8040-4ec2-a51e-3da1448b8660}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK PlixHandler
+VAR_INPUT
+	go :BOOL;
+
+END_VAR
+VAR_OUTPUT
+	
+
+END_VAR
+VAR
+	//Arduino				/////////////////////////////////////////
+		//States
+	Scanner					:USINT		:= 10;
+	
+	PlixFanGo				:USINT		:=40;
+	
+		//Varibles
+	WingUp					:USINT 		:=220;
+	WingFlat				:USINT 		:=180;
+	WingHDown				:USINT 		:=155;
+	WingDown				:USINT 		:=80;
+	FanHigh					:USINT 		:=103;
+	FanLow					:USINT 		:=95;
+	FanOff					:USINT 		:=89;
+	FanReverse				:USINT 		:=74;
+
+	//Stepper				/////////////////////////////////////////
+	HaltStackStepper: MC_Halt;
+	EnableStackStepper: MC_Power;
+	MoveStackAbsolute : MC_MoveAbsolute;
+	
+		//Varibles
+	StackStepperRun: BOOL;
+	StackStepperPosition: LREAL;
+	StackStepperVelocity: LREAL;
+	
+	StackStepperHalt: BOOL;
+	StackStepperHaltDone: BOOL;
+	StackStepperAbsoluteDone: BOOL;
+	StackStepperEnable: BOOL;
+	ArduinoBusyBit: BOOL;
+	Byte31IN: BYTE;
+	StackSensor1: BOOL;
+	Sensors: BYTE;
+	StackSensor2: BOOL;
+	StackSensor3: BOOL;
+	Sensor4: BOOL;
+	Sensor5: BOOL;
+	PlixHandlerState: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[MoveStackAbsolute(
+	Axis:= GVL.StackStepper, 
+	Execute:= StackStepperRun, 
+	Position:= StackStepperPosition, 
+	Velocity:= StackStepperVelocity, 
+	Acceleration:= , 
+	Deceleration:= , 
+	Done=> StackStepperAbsoluteDone, );
+	
+HaltStackStepper(
+	Axis:= GVL.StackStepper, 
+	Execute:= StackStepperHalt, 
+	Deceleration:= ,  
+	Done=> StackStepperHaltDone, );
+	
+EnableStackStepper(
+	Axis:= GVL.StackStepper, 
+	Enable:= StackStepperEnable, 
+	Enable_Positive:= StackStepperEnable, 
+	Enable_Negative:= StackStepperEnable, );
+	
+	//Coms
+GVL.ArduinoComsTimer(
+	IN := GVL.ArduinoState > 0,
+	PT := GVL.ArduinoComsTime,);
+	
+IF GVL.ArduinoComsTimer.Q THEN
+	GVL.ArduinoState := GVL.Idle;
+END_IF
+IF go THEN
+	StackStepperEnable := TRUE;
+END_IF
+StackSensor2 := GVL.Sensors.1;
+
+
+CASE PlixHandlerState OF
+	//home
+	100:
+		IF NOT StackSensor2 THEN//AND NOT StackSensor2 AND NOT StackSensor3 THEN
+			StackStepperPosition := 85;
+			StackStepperVelocity := 100;
+			StackStepperRun := TRUE;
+		ELSE 
+			StackStepperRun := FALSE;
+			StackStepperHalt :=TRUE;
+			PlixHandlerState :=200;
+			
+		END_IF
+	200:
+		StackStepperHalt :=FALSE;
+		IF StackSensor2 THEN//AND  StackSensor2 AND  StackSensor3 THEN
+			StackStepperPosition := 1900;
+			StackStepperVelocity := 100;
+			StackStepperRun := TRUE;
+		ELSE 
+			StackStepperRun := FALSE;
+			StackStepperHalt :=TRUE;
+			PlixHandlerState :=200;
+			//GVL.SetCounterVal :=5000000;
+			//GVL.SetCounter :=TRUE;
+			PlixHandlerState :=400;
+				
+			END_IF
+	//fan on
+	//up to head
+	//down
+	//scan
+	//decision
+	//zero
+		//blast stack
+		//repick
+	//double
+		//wiggle
+		//blast
+		//rescan
+	//single
+	//fan reverse
+	//fan off
+	//air blast
+	//fill out stats
+	//loops
+	
+	
+	
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="PlixHandler">
+      <LineId Id="30" Count="6" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="52" Count="3" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="67" Count="3" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="130" Count="6" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="188" Count="1" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="187" Count="0" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="173" Count="1" />
+      <LineId Id="183" Count="1" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="179" Count="1" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="201" Count="1" />
+      <LineId Id="192" Count="1" />
+      <LineId Id="203" Count="1" />
+      <LineId Id="196" Count="4" />
+      <LineId Id="190" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="142" Count="3" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="154" Count="2" />
+      <LineId Id="146" Count="1" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="160" Count="2" />
+      <LineId Id="151" Count="2" />
+      <LineId Id="140" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

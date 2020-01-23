@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
+  <GVL Name="GVL" Id="{ccf984d4-07d3-4c7c-bc8c-f6ee9636b01a}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+VAR_GLOBAL
+	
+	//Timing				/////////////////////////////////////////			
+	SystemTime							:WORD;
+	SystemTimeM							:WORD;
+	SystemTimeMs						:WORD;
+	ArduinoComsTimer					:TON;
+	ArduinoComsTime						:TIME		:=T#10MS;
+		
+	//Arduino				/////////////////////////////////////////
+		//States
+	ArduinoState 				AT %Q*	:USINT		:=0;//byte out 0
+	FanDyno						AT %Q*	:USINT		:=0;//byte out 1
+	Idle						:USINT	:= 0;
+	
+	Byte31IN					AT %I*	:USINT;
+	TopEndStop					AT %I*	:BOOL;
+	BottomEndStop				AT %I*	:BOOL;
+	Analog1   					AT %I*	:USINT;			//byte in 0
+	Analog2   					AT %I*	:USINT;			//byte in 1
+	Analog3   					AT %I*	:USINT;			//byte in 2
+	Average   					AT %I*	:USINT;			//byte in 3
+	Sensors						AT %I*	:USINT;			//byte in 12
+	OutArduino2					AT %Q*	:BYTE;			//byte out 2
+	OutArduino3					AT %Q*	:BYTE;			//byte out 3
+		
+		//Inputs
+	ArduinoBusyBit			:BOOL;
+	
+		//Outputs
+	Pin3024V: BOOL;										//all the 24v o
+	Pin2524V: BOOL;
+	Pin3124V: BOOL;
+	Pin2724V: BOOL;
+	Pin3224V: BOOL;
+	Pin2824V: BOOL;
+	Pin3324V: BOOL;
+	Pin2924V: BOOL;
+	Pin2424V: BOOL;
+	Pin1424V: BOOL;
+	Pin2624V: BOOL;
+	Pin1524V: BOOL;
+	Pin3424V: BOOL;
+	Pin2324V: BOOL;
+	Pin3624V: BOOL;
+	Pin2224V: BOOL;
+	
+	
+	//Stepper				/////////////////////////////////////////
+	StackStepper : axis_ref;
+
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

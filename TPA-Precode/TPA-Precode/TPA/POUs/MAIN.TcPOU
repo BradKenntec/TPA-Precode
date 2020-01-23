@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
+  <POU Name="MAIN" Id="{234c335d-6276-4863-92f4-beca4254cadb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+
+
+
+	
+	//Varibles				/////////////////////////////////////////
+	e 						:INT;
+	Single					:BOOL;
+	Double					:BOOL;
+	Zero					:BOOL;
+	TopPickCut				:INT;
+	HalfWayCut				:INT;
+	State					:INT 		:=0;
+	Calibrate 				:BOOL;
+	TopPickScan				:INT;
+	HalfWayDownScan			:INT;
+	PlixInBox				:BOOL; //if theres a plix in the box 
+	
+	
+	//Stats					/////////////////////////////////////////
+	Singles					:INT;
+	Doubles					:INT;
+	Zeros					:INT;
+	Wiggle					:INT;
+	Count 					:INT		:= 0;
+
+
+	
+	//Unsure				/////////////////////////////////////////
+	msgCtrlMask     		:DWORD;
+    msgFmtStr               :T_MaxString;
+    strArg          		:T_MaxString;
+
+	
+	//Time					/////////////////////////////////////////
+	fbTime					:FB_LocalSystemTime := ( bEnable :=TRUE, dwCycle := 1 );
+	StartTime				:REAL;
+	GoTime					:REAL;
+	EndTime					:REAL;
+	TotalTime				:REAL;
+	CycleTime				:REAL;
+	AverageTime				:REAL;
+	TimeSeconds				:REAL;
+	Delay 					:TON;
+	
+	b : PlixHandler;
+END_VAR
+
+VAR PERSISTENT				/////////////////////////////////////////
+	
+	//CutPoints				/////////////////////////////////////////
+	PlixNumberScan			:INT;
+	PlixNumberScanLeft		:INT;
+	PlixNumberScanRight		:INT;
+	TopCut					:INT;
+	BottomCut				:INT;
+	TopCutLeft				:INT;
+	BottomCutLeft			:INT;
+	TopCutRight				:INT;
+	BottomCutRight			:INT;
+	
+	
+	//Time					/////////////////////////////////////////
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+//Arduino					/////////////////////////////////////////
+	//IO Setup
+GVL.OutArduino2.0 := GVL.Pin3024V;
+GVL.OutArduino2.1 := GVL.Pin2524V;
+GVL.OutArduino2.2 := GVL.Pin3124V;
+GVL.OutArduino2.3 := GVL.Pin2724V;
+GVL.OutArduino2.4 := GVL.Pin3224V;
+GVL.OutArduino2.5 := GVL.Pin2824V;
+GVL.OutArduino2.6 := GVL.Pin3324V;
+GVL.OutArduino2.7 := GVL.Pin2924V;
+GVL.OutArduino3.0 := GVL.Pin2424V;
+GVL.OutArduino3.1 := GVL.Pin1424V;
+GVL.OutArduino3.2 := GVL.Pin2624V;
+GVL.OutArduino3.3 := GVL.Pin1524V;
+GVL.OutArduino3.4 := GVL.Pin3424V;
+GVL.OutArduino3.5 := GVL.Pin2324V;
+GVL.OutArduino3.6 := GVL.Pin3624V;
+GVL.OutArduino3.7 := GVL.Pin2224V;
+
+b(
+	go :=TRUE,
+	);
+
+	//Plix in Box
+//IF (NOT Sensor3 AND Sensor2) THEN
+//	PlixInBox := TRUE;
+//ELSE 
+//	PlixInBox := FALSE;
+//END_IF
+
+
+//Time SetUp				/////////////////////////////////////////	
+GVL.SystemTime := fbTime.systemTime.wSecond;
+GVL.SystemTimeMs := fbTime.systemTime.wMilliseconds;
+GVL.SystemTimeM := fbTime.systemTime.wMinute;
+TimeSeconds := GVL.SystemTime + (GVL.SystemTimeMs * 0.001) + ( GVL.SystemTimeM * 60 );
+fbTime();
+
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="197" Count="0" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="203" Count="0" />
+      <LineId Id="374" Count="14" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="390" Count="0" />
+      <LineId Id="389" Count="0" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="248" Count="3" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="238" Count="6" />
+      <LineId Id="254" Count="1" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="217" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
