@@ -9,24 +9,15 @@ VAR
 	
 	//Varibles				/////////////////////////////////////////
 	e 						:INT;
-	Single					:BOOL;
-	Double					:BOOL;
-	Zero					:BOOL;
+	
 	TopPickCut				:INT;
 	HalfWayCut				:INT;
-	State					:INT 		:=0;
-	Calibrate 				:BOOL;
 	TopPickScan				:INT;
 	HalfWayDownScan			:INT;
 	PlixInBox				:BOOL; //if theres a plix in the box 
 	
 	
-	//Stats					/////////////////////////////////////////
-	Singles					:INT;
-	Doubles					:INT;
-	Zeros					:INT;
-	Wiggle					:INT;
-	Count 					:INT		:= 0;
+	
 
 
 	
@@ -47,26 +38,10 @@ VAR
 	TimeSeconds				:REAL;
 	Delay 					:TON;
 	
-	b : PlixHandler;
+	PlixHandlerFB : PlixHandler;
 END_VAR
 
-VAR PERSISTENT				/////////////////////////////////////////
-	
-	//CutPoints				/////////////////////////////////////////
-	PlixNumberScan			:INT;
-	PlixNumberScanLeft		:INT;
-	PlixNumberScanRight		:INT;
-	TopCut					:INT;
-	BottomCut				:INT;
-	TopCutLeft				:INT;
-	BottomCutLeft			:INT;
-	TopCutRight				:INT;
-	BottomCutRight			:INT;
-	
-	
-	//Time					/////////////////////////////////////////
 
-END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[
@@ -88,8 +63,8 @@ GVL.OutArduino3.4 := GVL.Pin3424V;
 GVL.OutArduino3.5 := GVL.Pin2324V;
 GVL.OutArduino3.6 := GVL.Pin3624V;
 GVL.OutArduino3.7 := GVL.Pin2224V;
-
-b(
+GVL.ArduinoBusyBit := GVL.Byte31IN.0;
+PlixHandlerFB(
 	go :=TRUE,
 	);
 

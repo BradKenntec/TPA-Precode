@@ -15,8 +15,6 @@ VAR
 		//States
 	Scanner					:USINT		:= 10;
 	
-	PlixFanGo				:USINT		:=40;
-	
 		//Varibles
 	WingUp					:USINT 		:=220;
 	WingFlat				:USINT 		:=180;
@@ -26,22 +24,31 @@ VAR
 	FanLow					:USINT 		:=95;
 	FanOff					:USINT 		:=89;
 	FanReverse				:USINT 		:=74;
+	WingGo					:USINT		:=20;
+	FanGo					:USINT		:=30;
 
 	//Stepper				/////////////////////////////////////////
-	HaltStackStepper: MC_Halt;
-	EnableStackStepper: MC_Power;
-	MoveStackAbsolute : MC_MoveAbsolute;
+	HaltStackStepper	: MC_Halt;
+	EnableStackStepper	: MC_Power;
+	MoveStackAbsolute	: MC_MoveAbsolute;
+	ReadStackPosition	: MC_ReadActualPosition;
+	SetStackPosition	: MC_SetPosition;
+	StopStackStepper	: MC_Stop;
+	ResetStackStepper	: MC_Reset;
 	
 		//Varibles
 	StackStepperRun: BOOL;
 	StackStepperPosition: LREAL;
 	StackStepperVelocity: LREAL;
-	
+	StackStepperCurrentPosition: LREAL;
+	StackStepperZeroPosition : BOOL;
+	StackStepperStop: BOOL;
+	StackStepperReset: BOOL;
 	StackStepperHalt: BOOL;
 	StackStepperHaltDone: BOOL;
 	StackStepperAbsoluteDone: BOOL;
 	StackStepperEnable: BOOL;
-	ArduinoBusyBit: BOOL;
+	
 	Byte31IN: BYTE;
 	StackSensor1: BOOL;
 	Sensors: BYTE;
@@ -50,8 +57,37 @@ VAR
 	Sensor4: BOOL;
 	Sensor5: BOOL;
 	PlixHandlerState: INT;
+	BottomEndStop: BOOL;
+	Boot: BOOL := TRUE;
+	Calibrate 				:BOOL;
+	NextState: INT;
+	Single					:BOOL;
+	Double					:BOOL;
+	Zero					:BOOL;
+	//Stats					/////////////////////////////////////////
+	Singles					:INT;
+	Doubles					:INT;
+	Zeros					:INT;
+	Wiggle					:INT;
+	Count 					:INT		:= 0;
 END_VAR
-]]></Declaration>
+VAR PERSISTENT				/////////////////////////////////////////
+	
+	//CutPoints				/////////////////////////////////////////
+	PlixNumberScan			:INT;
+	PlixNumberScanLeft		:INT;
+	PlixNumberScanRight		:INT;
+	TopCut					:INT;
+	BottomCut				:INT;
+	TopCutLeft				:INT;
+	BottomCutLeft			:INT;
+	TopCutRight				:INT;
+	BottomCutRight			:INT;
+	
+	
+	//Time					/////////////////////////////////////////
+
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[MoveStackAbsolute(
 	Axis:= GVL.StackStepper, 
@@ -73,6 +109,43 @@ EnableStackStepper(
 	Enable:= StackStepperEnable, 
 	Enable_Positive:= StackStepperEnable, 
 	Enable_Negative:= StackStepperEnable, );
+
+ReadStackPosition(
+	Axis:= GVL.StackStepper, 
+	Enable:= StackStepperEnable, 
+	Position=> StackStepperCurrentPosition);	
+
+SetStackPosition(
+	Axis:= GVL.StackStepper, 
+	Execute:= StackStepperZeroPosition, 
+	Position:= 0, 
+	Mode:= FALSE, 
+	Options:= , 
+	 );
+	
+StopStackStepper(
+	Axis:= GVL.StackStepper, 
+	Execute:= StackStepperStop, 
+	Deceleration:= , 
+	Jerk:= , 
+	Options:= , 
+	Done=> , 
+	Busy=> , 
+	Active=> , 
+	CommandAborted=> , 
+	Error=> , 
+	ErrorID=> );
+	
+ResetStackStepper(
+	Axis:= GVL.StackStepper, 
+	Execute:= StackStepperReset, 
+	Done=> , 
+	Busy=> , 
+	Error=> , 
+	ErrorID=> );
+	
+	
+	
 	
 	//Coms
 GVL.ArduinoComsTimer(
@@ -86,41 +159,127 @@ IF go THEN
 	StackStepperEnable := TRUE;
 END_IF
 StackSensor2 := GVL.Sensors.1;
+BottomEndStop :=GVL.Sensors.2;
+
 
 
 CASE PlixHandlerState OF
 	//home
-	100:
-		IF NOT StackSensor2 THEN//AND NOT StackSensor2 AND NOT StackSensor3 THEN
-			StackStepperPosition := 85;
+	1:
+		IF StackStepperHaltDone THEN 
+				PlixHandlerState :=NextState;
+		END_IF
+		
+	10:
+		IF   BottomEndStop THEN//if not blocked drive down till blocked
+			StackStepperPosition := -200;
 			StackStepperVelocity := 100;
 			StackStepperRun := TRUE;
 		ELSE 
 			StackStepperRun := FALSE;
 			StackStepperHalt :=TRUE;
-			PlixHandlerState :=200;
+			NextState :=20;
+			PlixHandlerState :=1;
+			
+			
+		END_IF
+	20:
+		StackStepperHalt :=FALSE;
+		IF  NOT BottomEndStop THEN//drive up till unblocked
+			StackStepperPosition := 1200;
+			StackStepperVelocity := 100;
+			StackStepperRun := TRUE;
+		ELSE 
+			StackStepperRun := FALSE;
+			StackStepperHalt :=TRUE;
+			NextState :=30;
+			PlixHandlerState :=1;	
+		END_IF	
+		
+	30:
+		StackStepperZeroPosition := TRUE;//set position to zero just above endstop
+		PlixHandlerState :=100;
+	
+	100:
+		StackStepperZeroPosition := FALSE;
+		IF NOT StackSensor2 THEN//AND NOT StackSensor2 AND NOT StackSensor3 THEN
+			StackStepperPosition := 200;
+			StackStepperVelocity := 200;//make sure to change the amount of steps to plix pick up
+			StackStepperRun := TRUE;
+		ELSE 
+			StackStepperRun := FALSE;
+			StackStepperHalt :=TRUE;
+			NextState :=200;
+			PlixHandlerState :=1;
 			
 		END_IF
 	200:
 		StackStepperHalt :=FALSE;
 		IF StackSensor2 THEN//AND  StackSensor2 AND  StackSensor3 THEN
-			StackStepperPosition := 1900;
-			StackStepperVelocity := 100;
+			StackStepperPosition := 2000;
+			StackStepperVelocity := 200;//make sure to change the amount of steps to plix pick up
 			StackStepperRun := TRUE;
 		ELSE 
 			StackStepperRun := FALSE;
 			StackStepperHalt :=TRUE;
-			PlixHandlerState :=200;
-			//GVL.SetCounterVal :=5000000;
-			//GVL.SetCounter :=TRUE;
-			PlixHandlerState :=400;
+			NextState :=300;
+			PlixHandlerState :=1;
 				
+		END_IF
+		
+	300://fan on
+		IF GVL.ArduinoBusyBit THEN//if arduino is free then ask to change state
+			GVL.FanDyno := FanHigh;
+			GVL.ArduinoState := FanGo;
+			PlixHandlerState :=400;
+		END_IF
+		
+	400://up to head
+		StackStepperHalt :=FALSE;
+		StackStepperPosition := StackStepperCurrentPosition + 150;
+		StackStepperVelocity := 200;
+		StackStepperRun := TRUE;
+		PlixHandlerState :=500;
+		
+	500://down
+		StackStepperRun := FALSE;
+		IF StackStepperAbsoluteDone THEN
+			StackStepperPosition := StackStepperCurrentPosition - 350;
+			StackStepperVelocity := 200;
+			StackStepperRun := TRUE;
+			PlixHandlerState :=600;
+		END_IF
+		
+	
+	
+	600://scan
+		IF StackStepperAbsoluteDone THEN
+			IF GVL.ArduinoBusyBit THEN//if arduino is free then ask to change state
+				GVL.ArduinoState := Scanner;
+				PlixHandlerState :=700;
 			END_IF
-	//fan on
-	//up to head
-	//down
-	//scan
-	//decision
+		END_IF
+	
+
+	1000://decision
+		IF GVL.Average > TopCut THEN
+			Zero := TRUE;
+			PlixHandlerState :=2000;
+		
+		ELSIF  GVL.Average <= TopCut AND GVL.Average > BottomCut THEN
+			Single := TRUE;
+			PlixHandlerState :=3000;
+			
+		ELSIF GVL.Average <= BottomCut THEN
+			Double := TRUE;
+			PlixHandlerState :=4000;
+			
+		END_IF
+		IF Calibrate THEN
+			Single := TRUE;
+		 	
+			PlixHandlerState :=5000;
+		END_IF
 	//zero
 		//blast stack
 		//repick
@@ -148,23 +307,54 @@ END_CASE]]></ST>
       <LineId Id="64" Count="0" />
       <LineId Id="67" Count="3" />
       <LineId Id="65" Count="0" />
-      <LineId Id="84" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="262" Count="1" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="273" Count="6" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="306" Count="10" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="317" Count="0" />
+      <LineId Id="319" Count="5" />
+      <LineId Id="318" Count="0" />
+      <LineId Id="302" Count="3" />
       <LineId Id="130" Count="6" />
       <LineId Id="85" Count="0" />
       <LineId Id="182" Count="0" />
       <LineId Id="188" Count="1" />
       <LineId Id="181" Count="0" />
-      <LineId Id="187" Count="0" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="284" Count="0" />
       <LineId Id="138" Count="0" />
       <LineId Id="137" Count="0" />
       <LineId Id="139" Count="0" />
+      <LineId Id="336" Count="0" />
+      <LineId Id="382" Count="1" />
+      <LineId Id="381" Count="0" />
+      <LineId Id="337" Count="0" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="344" Count="6" />
+      <LineId Id="385" Count="0" />
+      <LineId Id="370" Count="0" />
+      <LineId Id="351" Count="11" />
+      <LineId Id="368" Count="0" />
+      <LineId Id="386" Count="0" />
+      <LineId Id="338" Count="2" />
+      <LineId Id="389" Count="1" />
+      <LineId Id="341" Count="0" />
       <LineId Id="163" Count="0" />
+      <LineId Id="287" Count="0" />
       <LineId Id="173" Count="1" />
       <LineId Id="183" Count="1" />
       <LineId Id="175" Count="0" />
       <LineId Id="185" Count="0" />
       <LineId Id="176" Count="0" />
-      <LineId Id="179" Count="1" />
+      <LineId Id="377" Count="0" />
+      <LineId Id="387" Count="0" />
+      <LineId Id="180" Count="0" />
       <LineId Id="164" Count="0" />
       <LineId Id="186" Count="0" />
       <LineId Id="205" Count="0" />
@@ -172,10 +362,53 @@ END_CASE]]></ST>
       <LineId Id="201" Count="1" />
       <LineId Id="192" Count="1" />
       <LineId Id="203" Count="1" />
-      <LineId Id="196" Count="4" />
+      <LineId Id="378" Count="0" />
+      <LineId Id="388" Count="0" />
+      <LineId Id="200" Count="0" />
       <LineId Id="190" Count="0" />
+      <LineId Id="391" Count="1" />
+      <LineId Id="394" Count="1" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="401" Count="0" />
+      <LineId Id="396" Count="0" />
+      <LineId Id="393" Count="0" />
       <LineId Id="148" Count="0" />
-      <LineId Id="142" Count="3" />
+      <LineId Id="402" Count="2" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="415" Count="0" />
+      <LineId Id="405" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="423" Count="0" />
+      <LineId Id="407" Count="0" />
+      <LineId Id="411" Count="0" />
+      <LineId Id="413" Count="1" />
+      <LineId Id="416" Count="0" />
+      <LineId Id="412" Count="0" />
+      <LineId Id="408" Count="2" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="421" Count="0" />
+      <LineId Id="418" Count="0" />
+      <LineId Id="417" Count="0" />
+      <LineId Id="420" Count="0" />
+      <LineId Id="419" Count="0" />
+      <LineId Id="422" Count="0" />
+      <LineId Id="145" Count="0" />
+      <LineId Id="425" Count="0" />
+      <LineId Id="424" Count="0" />
+      <LineId Id="426" Count="0" />
+      <LineId Id="470" Count="0" />
+      <LineId Id="427" Count="1" />
+      <LineId Id="446" Count="1" />
+      <LineId Id="469" Count="0" />
+      <LineId Id="451" Count="0" />
+      <LineId Id="449" Count="0" />
+      <LineId Id="471" Count="0" />
+      <LineId Id="450" Count="0" />
+      <LineId Id="452" Count="0" />
+      <LineId Id="448" Count="0" />
+      <LineId Id="454" Count="1" />
+      <LineId Id="458" Count="1" />
+      <LineId Id="453" Count="0" />
       <LineId Id="157" Count="0" />
       <LineId Id="159" Count="0" />
       <LineId Id="158" Count="0" />
