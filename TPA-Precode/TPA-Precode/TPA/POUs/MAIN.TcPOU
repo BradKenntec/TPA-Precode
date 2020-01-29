@@ -31,10 +31,9 @@ VAR
 	fbTime					:FB_LocalSystemTime := ( bEnable :=TRUE, dwCycle := 1 );
 	StartTime				:REAL;
 	GoTime					:REAL;
-	EndTime					:REAL;
+	
 	TotalTime				:REAL;
-	CycleTime				:REAL;
-	AverageTime				:REAL;
+	
 	TimeSeconds				:REAL;
 	Delay 					:TON;
 	

@@ -20,7 +20,7 @@ VAR
 	WingFlat				:USINT 		:=180;
 	WingHDown				:USINT 		:=155;
 	WingDown				:USINT 		:=80;
-	FanHigh					:USINT 		:=103;
+	FanHigh					:USINT 		:=105;
 	FanLow					:USINT 		:=95;
 	FanOff					:USINT 		:=89;
 	FanReverse				:USINT 		:=74;
@@ -64,12 +64,17 @@ VAR
 	Single					:BOOL;
 	Double					:BOOL;
 	Zero					:BOOL;
+	Start					:BOOL;
 	//Stats					/////////////////////////////////////////
 	Singles					:INT;
 	Doubles					:INT;
 	Zeros					:INT;
 	Wiggle					:INT;
 	Count 					:INT		:= 0;
+	Delay 					:TON;
+	CycleTime				:REAL;
+	EndTime					:REAL;
+	AverageTime				:REAL;
 END_VAR
 VAR PERSISTENT				/////////////////////////////////////////
 	
@@ -160,55 +165,63 @@ IF go THEN
 END_IF
 StackSensor2 := GVL.Sensors.1;
 BottomEndStop :=GVL.Sensors.2;
-
-
+StackStepperZeroPosition := TRUE;//sometimes after many restarts the position can be massive and cause problems 
+StackStepperZeroPosition := FALSE;
 
 CASE PlixHandlerState OF
-	//home
+	
 	1:
+		StackStepperZeroPosition := FALSE;
+		StackStepperRun := FALSE;
+		StackStepperHalt :=TRUE;
 		IF StackStepperHaltDone THEN 
 				PlixHandlerState :=NextState;
+				StackStepperHalt :=FALSE;
 		END_IF
 		
+	
 	10:
-		IF   BottomEndStop THEN//if not blocked drive down till blocked
-			StackStepperPosition := -200;
+		IF Boot THEN
+			PlixHandlerState := 11;
+		ELSE
+			PlixHandlerState := 100;
+		END_IF
+		
+	11://home bottom sensor
+		
+		IF  BottomEndStop THEN//if not blocked drive down till blocked
+			StackStepperPosition := -5000;
 			StackStepperVelocity := 100;
 			StackStepperRun := TRUE;
 		ELSE 
-			StackStepperRun := FALSE;
-			StackStepperHalt :=TRUE;
 			NextState :=20;
 			PlixHandlerState :=1;
-			
-			
+				
 		END_IF
+		
 	20:
-		StackStepperHalt :=FALSE;
 		IF  NOT BottomEndStop THEN//drive up till unblocked
 			StackStepperPosition := 1200;
 			StackStepperVelocity := 100;
 			StackStepperRun := TRUE;
 		ELSE 
-			StackStepperRun := FALSE;
-			StackStepperHalt :=TRUE;
 			NextState :=30;
 			PlixHandlerState :=1;	
 		END_IF	
 		
 	30:
+		Boot := FALSE;
 		StackStepperZeroPosition := TRUE;//set position to zero just above endstop
+		StackStepperZeroPosition := FALSE;
 		PlixHandlerState :=100;
 	
-	100:
-		StackStepperZeroPosition := FALSE;
+	100:// home stack top
+		
 		IF NOT StackSensor2 THEN//AND NOT StackSensor2 AND NOT StackSensor3 THEN
 			StackStepperPosition := 200;
 			StackStepperVelocity := 200;//make sure to change the amount of steps to plix pick up
 			StackStepperRun := TRUE;
 		ELSE 
-			StackStepperRun := FALSE;
-			StackStepperHalt :=TRUE;
 			NextState :=200;
 			PlixHandlerState :=1;
 			
@@ -236,7 +249,7 @@ CASE PlixHandlerState OF
 		
 	400://up to head
 		StackStepperHalt :=FALSE;
-		StackStepperPosition := StackStepperCurrentPosition + 150;
+		StackStepperPosition := StackStepperCurrentPosition + 200;
 		StackStepperVelocity := 200;
 		StackStepperRun := TRUE;
 		PlixHandlerState :=500;
@@ -259,26 +272,34 @@ CASE PlixHandlerState OF
 				PlixHandlerState :=700;
 			END_IF
 		END_IF
-	
-
+	700:
+		IF GVL.ArduinoBusyBit THEN//if arduino is free then ask to change state
+			PlixHandlerState :=800;
+		END_IF
+	800://still hasnt written the new scan to beckhoff so we need to wait a little for it to loop on the arduino
+	Delay(IN:=TRUE, PT:=T#500MS);
+      	IF Delay.Q THEN
+        	Delay(IN:=FALSE);
+			PlixHandlerState :=1000;
+		END_IF
 	1000://decision
 		IF GVL.Average > TopCut THEN
 			Zero := TRUE;
-			PlixHandlerState :=2000;
+			PlixHandlerState :=2500;
 		
 		ELSIF  GVL.Average <= TopCut AND GVL.Average > BottomCut THEN
 			Single := TRUE;
-			PlixHandlerState :=3000;
+			PlixHandlerState :=2000;
 			
 		ELSIF GVL.Average <= BottomCut THEN
 			Double := TRUE;
-			PlixHandlerState :=4000;
+			PlixHandlerState :=1100;
 			
 		END_IF
 		IF Calibrate THEN
 			Single := TRUE;
 		 	
-			PlixHandlerState :=5000;
+			PlixHandlerState :=2500;
 		END_IF
 	//zero
 		//blast stack
@@ -287,14 +308,111 @@ CASE PlixHandlerState OF
 		//wiggle
 		//blast
 		//rescan
-	//single
-	//fan reverse
-	//fan off
-	//air blast
-	//fill out stats
-	//loops
+	1100:
+		Wiggle := Wiggle +1;
+		IF GVL.ArduinoBusyBit THEN//if arduino is free then ask to change state
+			GVL.FanDyno := WingDown;
+			GVL.ArduinoState := WingGo;
+			Delay(IN:=TRUE, PT:=T#500MS);
+			IF Delay.Q THEN
+				Delay(IN:=FALSE);
+				//GVL.RightAirJet := TRUE;
+				//GVL.LeftAirJet := TRUE;
+				PlixHandlerState := 1200; 
+			END_IF
+		END_IF
+	1200:
+		IF GVL.ArduinoBusyBit THEN//if arduino is free then ask to change state
+			GVL.FanDyno := WingUp;
+			GVL.ArduinoState := WingGo;
+			Delay(IN:=TRUE, PT:=T#500MS);
+			IF Delay.Q THEN
+				Delay(IN:=FALSE);
+				//GVL.LeftAirJet := FALSE;
+				//GVL.RightAirJet := FALSE;
+				PlixHandlerState := 1300;
+			END_IF
+		END_IF
+	1300:
+		GVL.FanDyno :=WingFlat;
+		GVL.ArduinoState := WingGo;
+		Delay(IN:=TRUE, PT:=T#500MS);
+		IF Delay.Q THEN
+			Delay(IN:=FALSE);
+			PlixHandlerState := 600;
+		END_IF
 	
 	
+	
+	//////////////////////////////////////////////////
+		
+	2000:
+		IF GVL.ArduinoBusyBit THEN
+			GVL.FanDyno := 74;
+			GVL.ArduinoState := FanGo;
+			PlixHandlerState:=2200;
+		END_IF
+	2200:
+			//GVL.FanDyno := 74;
+			//GVL.ArduinoState := FanGo;
+		Delay(IN:=TRUE, PT:=T#300MS);
+		IF Delay.Q THEN
+        	Delay(IN:=FALSE);
+        	PlixHandlerState := 2300;
+    	END_IF
+	2300:
+		IF GVL.ArduinoBusyBit THEN
+			GVL.Pin3324V :=TRUE;
+			PlixHandlerState := 2400;
+		END_IF
+	2400:
+		Delay(IN:=TRUE, PT:=T#300MS);
+		IF Delay.Q THEN
+        	Delay(IN:=FALSE);
+        	PlixHandlerState := 2500;
+    	END_IF
+	2500:
+		IF GVL.ArduinoBusyBit THEN
+			GVL.FanDyno := 89;
+			GVL.ArduinoState := FanGo;
+			PlixHandlerState := 2600;
+		END_IF
+	2600:
+		Delay(IN:=TRUE, PT:=T#100MS);
+		IF Delay.Q THEN
+        	Delay(IN:=FALSE);
+			GVL.Pin3324V :=FALSE;
+        	PlixHandlerState := 2800;
+    	END_IF
+	2800:
+	//finishing up stats ant time and stuff
+		PlixHandlerState :=100;
+		IF Single THEN
+			Singles := Singles +1;
+		END_IF
+		IF Double THEN
+			Doubles := Doubles +1;
+		END_IF
+		Single := FALSE;
+		Double := FALSE;
+		EndTime := MAIN.TimeSeconds;	
+		IF Singles > 1 THEN
+			AverageTime := (EndTime - MAIN.GoTime)/Singles;
+		END_IF
+		
+		CycleTime := EndTime - MAIN.StartTime;
+		IF Calibrate THEN
+			Singles := Singles -1;
+			TopCut := GVL.Average + 100;
+			BottomCut := GVL.Average - 20;
+			//TopCutLeft := GVL.AverageLeft - 40;
+			//BottomCutLeft := AverageLeft - 66;
+			//TopCutRight := AverageRight + 10;
+			//BottomCutRight := AverageRight - 50;
+			PlixHandlerState :=0;
+			Calibrate := FALSE;
+		END_IF
+		
 	
 END_CASE]]></ST>
     </Implementation>
@@ -332,26 +450,37 @@ END_CASE]]></ST>
       <LineId Id="137" Count="0" />
       <LineId Id="139" Count="0" />
       <LineId Id="336" Count="0" />
-      <LineId Id="382" Count="1" />
-      <LineId Id="381" Count="0" />
+      <LineId Id="702" Count="0" />
+      <LineId Id="707" Count="0" />
+      <LineId Id="703" Count="0" />
+      <LineId Id="700" Count="1" />
+      <LineId Id="706" Count="0" />
+      <LineId Id="694" Count="0" />
+      <LineId Id="690" Count="0" />
+      <LineId Id="683" Count="3" />
+      <LineId Id="688" Count="1" />
+      <LineId Id="687" Count="0" />
       <LineId Id="337" Count="0" />
       <LineId Id="342" Count="0" />
-      <LineId Id="344" Count="6" />
+      <LineId Id="673" Count="0" />
+      <LineId Id="344" Count="4" />
       <LineId Id="385" Count="0" />
       <LineId Id="370" Count="0" />
-      <LineId Id="351" Count="11" />
+      <LineId Id="351" Count="3" />
+      <LineId Id="356" Count="4" />
       <LineId Id="368" Count="0" />
       <LineId Id="386" Count="0" />
       <LineId Id="338" Count="2" />
-      <LineId Id="389" Count="1" />
+      <LineId Id="672" Count="0" />
+      <LineId Id="389" Count="0" />
+      <LineId Id="708" Count="0" />
+      <LineId Id="390" Count="0" />
       <LineId Id="341" Count="0" />
       <LineId Id="163" Count="0" />
       <LineId Id="287" Count="0" />
       <LineId Id="173" Count="1" />
       <LineId Id="183" Count="1" />
       <LineId Id="175" Count="0" />
-      <LineId Id="185" Count="0" />
-      <LineId Id="176" Count="0" />
       <LineId Id="377" Count="0" />
       <LineId Id="387" Count="0" />
       <LineId Id="180" Count="0" />
@@ -393,7 +522,10 @@ END_CASE]]></ST>
       <LineId Id="419" Count="0" />
       <LineId Id="422" Count="0" />
       <LineId Id="145" Count="0" />
+      <LineId Id="721" Count="2" />
       <LineId Id="425" Count="0" />
+      <LineId Id="769" Count="3" />
+      <LineId Id="768" Count="0" />
       <LineId Id="424" Count="0" />
       <LineId Id="426" Count="0" />
       <LineId Id="470" Count="0" />
@@ -414,10 +546,24 @@ END_CASE]]></ST>
       <LineId Id="158" Count="0" />
       <LineId Id="149" Count="0" />
       <LineId Id="154" Count="2" />
-      <LineId Id="146" Count="1" />
-      <LineId Id="150" Count="0" />
-      <LineId Id="160" Count="2" />
-      <LineId Id="151" Count="2" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="735" Count="32" />
+      <LineId Id="733" Count="0" />
+      <LineId Id="730" Count="0" />
+      <LineId Id="151" Count="0" />
+      <LineId Id="724" Count="5" />
+      <LineId Id="679" Count="0" />
+      <LineId Id="521" Count="0" />
+      <LineId Id="704" Count="1" />
+      <LineId Id="522" Count="5" />
+      <LineId Id="680" Count="0" />
+      <LineId Id="528" Count="1" />
+      <LineId Id="681" Count="0" />
+      <LineId Id="530" Count="6" />
+      <LineId Id="682" Count="0" />
+      <LineId Id="537" Count="10" />
+      <LineId Id="641" Count="27" />
+      <LineId Id="152" Count="1" />
       <LineId Id="140" Count="0" />
     </LineIds>
   </POU>
