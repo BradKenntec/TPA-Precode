@@ -15,6 +15,7 @@
     <Implicit_KindOfTask>{dd055bcb-386f-4fa0-a794-77007ba9df9b}</Implicit_KindOfTask>
     <Implicit_Jitter_Distribution>{d6f5824a-5e45-4fbd-9492-3e9bbd421a68}</Implicit_Jitter_Distribution>
     <LibraryReferences>{2cbe0a59-e04f-49ba-8fc3-35f53ec2a7b3}</LibraryReferences>
+    <Released>false</Released>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="GlobalTextList.TcGTLO">
@@ -37,6 +38,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\PlixHandler.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\POU.TcPOU">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Visualization Manager.TcVMO">

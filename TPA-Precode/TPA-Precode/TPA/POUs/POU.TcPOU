@@ -1,0 +1,286 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
+  <POU Name="POU" Id="{52aa0559-33a0-4d96-a025-90b91128d749}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK POU
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	//STATES				/////////////////////////////////////////
+		BoxRemoved						: BOOL;
+		PlixRequest						: BOOL;
+		BoxGrabbed						: BOOL;
+		BoxRemoverState					: INT;
+		BoxReady						: BOOL;
+		BoxDropRequest					: BOOL;
+		BoxDelivered					: BOOL;
+		BoxCartHome						: BOOL;
+		BoxLoaderState					: INT;
+		FlapFolderState					: INT;
+		BoxGraberState					: INT;
+		BoxDropped 						: BOOL;
+		BoxRemover						: INT :=0;
+		BoxStackNeeded					: BOOL;
+		BoxRefillState					: INT;
+		
+	//ARDUINO				/////////////////////////////////////////
+	
+		//INPUTS
+	
+			PlixSensor1					: BOOL;
+			PlixSensor2					: BOOL;
+			MainStackFull				: BOOL; //sensor
+			SecondaryStackFull			: BOOL; //sensor
+			LastBoxGone					: BOOL; //sensor
+			BoxGrabberUp				: BOOL;//sensor
+			BoxGrabberDown				: BOOL;//sensor
+			FlapFolder1Up				: BOOL;//Sensor
+			FlapFolder1Down				: BOOL;//Sensor
+			FlapFolder2Up				: BOOL;//Sensor
+			FlapFolder2Down				: BOOL;//Sensor
+			CarriageAtPickUp			: BOOL; //sensor
+			CarriageAtDrop 				: BOOL;//sensor
+					
+		//OUTPUTS
+			CarriageWaitRam				: BOOL;
+			CarriageRam					: BOOL;
+			BoxGripper					: BOOL;
+			BoxGrabber					: BOOL;
+			FlapFolder1					: BOOL;
+			FlapFolder2					: BOOL;
+			BoxCart						: BOOL;
+			TopClamp					: BOOL;
+			BottomClamp					: BOOL;
+			
+			
+	//TIME					/////////////////////////////////////////
+		BoxCartTimer					: TON;
+		BoxCartTime						: TIME := T#2000MS;
+		FlapResetTimer					: TON;
+		FlapResetTime					: TIME := T#500MS;
+		BoxDropTimer					: TON;
+		BoxDropTime						: TIME := T#500MS;
+		PlixFlightTimer 				: TON;
+		PlixFlightTime 					: TIME := T#500MS;
+	
+	
+		StackReadyToDrop: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//need the code to decide when the boxes get dropped onto the gripper for a box refil
+
+
+
+//need timer for how long boxes have been on cart, make sure theyre stable(maybe a button to say ready
+BoxCartTimer(
+	IN := BoxCart = TRUE,
+	PT := BoxCartTime,);
+
+FlapResetTimer(//dont need this as we have the sensors 
+	IN := FlapFolder2 = FALSE,
+	PT := FlapResetTime,);
+	
+BoxDropTimer(//boxes dropped onto the graber before its gripped and pulled off
+	IN := BottomClamp = FALSE,
+	PT := BoxDropTime,);
+	
+PlixFlightTimer(//time from the head shooting the plix to it landing in a box
+	IN := PlixRequest = FALSE,
+	PT := PlixFlightTime,);
+
+CASE BoxLoaderState OF
+	100: //idle state moves the box cart to the loading position and waits for boxes to be put on
+		BoxCart := FALSE;
+		BoxCartHome := TRUE;//so we know were at the home end of the rams travel
+		BoxLoaderState := 200;
+		
+	200:// if we have boxes in the cart and there are no boxes in the machine and clamp is open we move the stack over
+		IF MainStackFull AND NOT SecondaryStackFull AND BoxCartHome AND NOT TopClamp  THEN
+			BoxCart := TRUE;
+			BoxCartHome := FALSE;
+			BoxCartTimer := TRUE;
+			BoxLoaderState := 210;
+			
+		END_IF//move boxes over if no boxes left and stack ready to load.
+	210:
+		IF BoxCartTimer.Q AND SecondaryStackFull THEN//after timer and if stack is on the cart we clamp it in place.
+			TopClamp:=TRUE;
+			BoxLoaderState :=300;
+		END_IF
+		
+	300:
+		IF TopClamp AND SecondaryStackFull THEN//once clamped we remove the cart ready to drop stack 
+			BoxCart := FALSE;
+			//TopClamp := TRUE;
+			BoxCartHome := TRUE;
+			BoxCartTimer := TRUE;
+			StackReadyToDrop := TRUE;
+			BoxLoaderState := 400;
+		END_IF
+	400:	
+		IF NOT StackReadyToDrop THEN
+			BoxLoaderState := 100;
+		END_IF
+		
+END_CASE
+CASE FlapFolderState OF
+	100:
+		FlapFolder1 := FALSE;
+		FlapFolder2 := FALSE;
+		BoxGripper := FALSE;
+		FlapResetTimer := TRUE;
+		FlapFolderState := 200;
+		
+	200:
+		IF FlapFolder1Up AND FlapFolder2Up THEN
+			BoxGrabber :=TRUE;
+			BoxGripper :=FALSE;
+			FlapFolderState := 300;
+		END_IF
+	210: 
+		IF NOT MainStackFull THEN //if theres no boxes we say no boxes and wait for that to be sorted
+			BoxStackNeeded := TRUE;
+			BottomClamp := FALSE;//drops the boxes on to the gripper
+			FlapFolderState := 300;
+		ELSE
+			FlapFolderState := 310;//if we have boxes carry on
+		END_IF
+	300: 
+		IF NOT BoxStackNeeded THEN
+			FlapFolderState := 310;//once boxes are loaded we carry on
+		END_IF
+	310:
+		IF BoxGrabberUp THEN
+			BottomClamp := FALSE;//drops the boxes on to the gripper
+			FlapFolderState := 400;
+		END_IF
+		
+		
+		
+	400:
+		IF BoxDropTimer.Q THEN//after a small timer for drop the stack is gripped again
+			BottomClamp :=TRUE;//after timer finnished 
+			BoxGripper :=TRUE;
+			FlapFolderState := 500;
+		END_IF
+		
+	500:	//may need a timer here 
+		BoxGrabber := FALSE;//box in the grabber is pulled off bottom of the stack
+		FlapFolderState := 600;
+		
+	600:
+		IF BoxGrabberDown THEN
+			FlapFolder1 := TRUE;
+			PlixRequest := TRUE;//must be set false in plix handler aftr shot
+			FlapFolderState := 610;
+		END_IF
+		
+	610:
+		IF FlapFolder1Down THEN
+			FlapFolderState :=710;
+		END_IF
+		
+	710:
+		IF NOT PlixRequest	THEN
+			//plix has been shot by plix head 
+			FlapFolderState := 720;
+		END_IF
+		
+	720:
+		//timer to wait a sec for plix to fly
+		IF PlixFlightTimer.Q THEN
+			FlapFolderState := 730;
+		END_IF
+	730:
+		IF NOT PlixSensor1 AND PlixSensor2 THEN
+			FlapFolder2 := TRUE;
+			FlapFolderState := 800;
+		END_IF
+	800: 
+		IF FlapFolder2Down THEN
+			BoxReady := TRUE;
+			FlapFolderState := 810;
+		END_IF
+		
+	
+	810:
+		IF BoxGrabbed THEN
+			BoxGripper := FALSE;
+			FlapFolderState := 820;
+		END_IF
+	820:
+		IF BoxRemoved THEN 
+			FlapFolderState := 100;
+		END_IF
+END_CASE
+
+
+
+
+CASE BoxRemoverState OF
+	100:
+		IF CarriageAtPickUp AND NOT BoxDropped THEN //if  carrige at pick up when turned on 
+			CarriageRam :=TRUE; //start it going to drop end
+			BoxRemoverState := 200;
+		END_IF
+		
+	200:
+		IF NOT CarriageAtPickUp THEN //soon as not at pick up 
+			CarriageWaitRam := TRUE;//turn on wait ram 
+			CarriageRam :=FALSE;// start carridge coming back to pick up
+			BoxRemoverState := 300;
+		END_IF
+		
+	300:
+		IF CarriageAtPickUp AND BoxReady THEN
+			CarriageWaitRam :=FALSE;
+			BoxRemoverState := 400;
+		END_IF
+	400: 
+		BoxReady := FALSE;
+		BoxGrabbed := TRUE;
+		BoxRemoverState := 500;
+	500:
+		IF NOT BoxGripper THEN
+			CarriageRam := TRUE;
+			BoxRemoverState := 600;
+		END_IF
+		
+	600:
+		IF CarriageAtDrop AND BoxDropRequest THEN
+			CarriageWaitRam := TRUE;
+			BoxGrabbed := FALSE;
+			BoxRemoverState := 700;
+		END_IF
+	700: 
+		IF BoxDropped THEN
+			BoxDelivered :=TRUE;
+			BoxRemoverState := 200;
+		END_IF
+END_CASE
+
+CASE BoxRefillState OF
+	100:
+		IF BoxStackNeeded THEN
+			BoxRefillState := 200;
+		END_IF
+		
+	200:
+		IF StackReadyToDrop THEN
+			BoxRefillState := 300;
+		END_IF
+	300:
+		StackReadyToDrop := FALSE;
+		BoxStackNeeded := FALSE;
+		TopClamp:= FALSE;
+		BoxRefillState := 100;
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="POU">
+      <LineId Id="69" Count="206" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

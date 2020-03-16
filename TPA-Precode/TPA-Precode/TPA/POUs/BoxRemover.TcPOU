@@ -1,18 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
-  <POU Name="BoxLoader" Id="{8c060388-5aea-4670-8177-a59a4980b218}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK BoxLoader
+  <POU Name="BoxRemover" Id="{96321d4f-7b48-4734-a4b8-a1b61b3a0819}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK BoxRemover
 VAR_INPUT
 END_VAR
 VAR_OUTPUT
 END_VAR
 VAR
+	
+	CarriageAtPickUp	:=BOOL;
+	CarriageAtDrop := BOOL;
+	BoxDropped := BOOL;
+
+
+
+
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
     </Implementation>
-    <LineIds Name="BoxLoader">
+    <LineIds Name="BoxRemover">
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

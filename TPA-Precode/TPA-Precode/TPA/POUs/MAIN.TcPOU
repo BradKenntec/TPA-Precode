@@ -46,27 +46,33 @@ END_VAR
       <ST><![CDATA[
 //Arduino					/////////////////////////////////////////
 	//IO Setup
-GVL.OutArduino2.0 := GVL.Pin3024V;
-GVL.OutArduino2.1 := GVL.Pin2524V;
-GVL.OutArduino2.2 := GVL.Pin3124V;
-GVL.OutArduino2.3 := GVL.Pin2724V;
-GVL.OutArduino2.4 := GVL.Pin3224V;
-GVL.OutArduino2.5 := GVL.Pin2824V;
-GVL.OutArduino2.6 := GVL.Pin3324V;
+GVL.OutArduino2.0 := GVL.Pin2224V;
+GVL.OutArduino2.1 := GVL.Pin2324V;
+GVL.OutArduino2.2 := GVL.Pin2424V;
+GVL.OutArduino2.3 := GVL.Pin2524V;
+GVL.OutArduino2.4 := GVL.Pin2624V;
+GVL.OutArduino2.5 := GVL.Pin2724V;
+GVL.OutArduino2.6 := GVL.Pin2824V;
 GVL.OutArduino2.7 := GVL.Pin2924V;
-GVL.OutArduino3.0 := GVL.Pin2424V;
-GVL.OutArduino3.1 := GVL.Pin1424V;
-GVL.OutArduino3.2 := GVL.Pin2624V;
-GVL.OutArduino3.3 := GVL.Pin1524V;
-GVL.OutArduino3.4 := GVL.Pin3424V;
-GVL.OutArduino3.5 := GVL.Pin2324V;
-GVL.OutArduino3.6 := GVL.Pin3624V;
-GVL.OutArduino3.7 := GVL.Pin2224V;
+GVL.OutArduino3.7 := GVL.Pin3024V;
+GVL.OutArduino3.6 := GVL.Pin3124V;
+GVL.OutArduino3.5 := GVL.Pin3224V;
+GVL.OutArduino3.4 := GVL.Pin3324V;
+GVL.OutArduino3.3 := GVL.Pin3424V;
+GVL.OutArduino3.2 := GVL.Pin3524V;
+GVL.OutArduino3.1 := GVL.Pin3624V;
+GVL.OutArduino3.0 := GVL.Pin3724V;
 GVL.ArduinoBusyBit := GVL.Byte31IN.0;
 PlixHandlerFB(
 	go :=TRUE,
 	);
-
+GVL.ArduinoComsTimer(
+	IN := GVL.ArduinoState > 0,
+	PT := GVL.ArduinoComsTime,);
+	
+IF GVL.ArduinoComsTimer.Q THEN
+	GVL.ArduinoState := GVL.Idle;
+END_IF
 	//Plix in Box
 //IF (NOT Sensor3 AND Sensor2) THEN
 //	PlixInBox := TRUE;
@@ -95,6 +101,7 @@ fbTime();
       <LineId Id="205" Count="0" />
       <LineId Id="390" Count="0" />
       <LineId Id="389" Count="0" />
+      <LineId Id="431" Count="5" />
       <LineId Id="252" Count="0" />
       <LineId Id="245" Count="0" />
       <LineId Id="248" Count="3" />

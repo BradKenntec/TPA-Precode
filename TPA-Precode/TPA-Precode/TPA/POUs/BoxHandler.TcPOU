@@ -1,0 +1,430 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
+  <POU Name="BoxHandler" Id="{8c060388-5aea-4670-8177-a59a4980b218}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK BoxHandler
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	//STATES				/////////////////////////////////////////
+		BoxRemoved						: BOOL;
+		PlixRequest						: BOOL;
+		BoxGrabbed						: BOOL;
+		BoxRemoverState					: INT;
+		BoxReady						: BOOL;
+		BoxDropRequest					: BOOL;
+		BoxDelivered					: BOOL;
+		BoxCartHome						: BOOL;
+		BoxLoaderState					: INT;
+		FlapFolderState					: INT;
+		BoxGraberState					: INT;
+		BoxDropped 						: BOOL;
+		BoxRemover						: INT :=0;
+		BoxStackNeeded					: BOOL;
+		BoxRefillState					: INT;
+		
+	//ARDUINO				/////////////////////////////////////////
+	
+		//INPUTS
+	
+			PlixSensor1					: BOOL;
+			PlixSensor2					: BOOL;
+			MainStackFull				: BOOL; //sensor
+			SecondaryStackFull			: BOOL; //sensor
+			LastBoxGone					: BOOL; //sensor
+			BoxGrabberUp				: BOOL;//sensor
+			BoxGrabberDown				: BOOL;//sensor
+			FlapFolder1Up				: BOOL;//Sensor
+			FlapFolder1Down				: BOOL;//Sensor
+			FlapFolder2Up				: BOOL;//Sensor
+			FlapFolder2Down				: BOOL;//Sensor
+			CarriageAtPickUp			: BOOL; //sensor
+			CarriageAtDrop 				: BOOL;//sensor
+					
+		//OUTPUTS
+			CarriageWaitRam				: BOOL;
+			CarriageRam					: BOOL;
+			BoxGripper					: BOOL;
+			BoxGrabber					: BOOL;
+			FlapFolder1					: BOOL;
+			FlapFolder2					: BOOL;
+			BoxCart						: BOOL;
+			TopClamp					: BOOL;
+			BottomClamp					: BOOL;
+			
+			
+	//TIME					/////////////////////////////////////////
+		BoxCartTimer					: TON;
+		BoxCartTime						: TIME := T#2000MS;
+		FlapResetTimer					: TON;
+		FlapResetTime					: TIME := T#500MS;
+		BoxDropTimer					: TON;
+		BoxDropTime						: TIME := T#500MS;
+		PlixFlightTimer 				: TON;
+		PlixFlightTime 					: TIME := T#500MS;
+	
+	
+	StackReadyToDrop: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+//need the code to decide when the boxes get dropped onto the gripper for a box refil
+
+
+
+//need timer for how long boxes have been on cart, make sure theyre stable(maybe a button to say ready
+BoxCartTimer(
+	IN := BoxCart = TRUE,
+	PT := BoxCartTime,);
+
+FlapResetTimer(//dont need this as we have the sensors 
+	IN := FlapFolder2 = FALSE,
+	PT := FlapResetTime,);
+	
+BoxDropTimer(//boxes dropped onto the graber before its gripped and pulled off
+	IN := BottomClamp = FALSE,
+	PT := BoxDropTime,);
+	
+PlixFlightTimer(//time from the head shooting the plix to it landing in a box
+	IN := PlixRequest = FALSE,
+	PT := PlixFlightTime,);
+
+CASE BoxLoaderState OF
+	100: //idle state moves the box cart to the loading position and waits for boxes to be put on
+		BoxCart := FALSE;
+		BoxCartHome := TRUE;//so we know were at the home end of the rams travel
+		BoxLoaderState := 200;
+		
+	200:// if we have boxes in the cart and there are no boxes in the machine and clamp is open we move the stack over
+		IF MainStackFull AND NOT SecondaryStackFull AND BoxCartHome AND NOT TopClamp  THEN
+			BoxCart := TRUE;
+			BoxCartHome := FALSE;
+			BoxCartTimer := TRUE;
+			BoxLoaderState := 210;
+			
+		END_IF//move boxes over if no boxes left and stack ready to load.
+	210:
+		IF BoxCartTimer.Q AND SecondaryStackFull THEN//after timer and if stack is on the cart we clamp it in place.
+			TopClamp:=TRUE;
+			BoxLoaderState :=300;
+		END_IF
+		
+	300:
+		IF TopClamp AND SecondaryStackFull THEN//once clamped we remove the cart ready to drop stack 
+			BoxCart := FALSE;
+			//TopClamp := TRUE;
+			BoxCartHome := TRUE;
+			BoxCartTimer := TRUE;
+			StackReadyToDrop := TRUE;
+			BoxLoaderState := 400;
+		END_IF
+	400:	
+		IF NOT StackReadyToDrop THEN
+			BoxLoaderState := 100;
+		END_IF
+		
+END_CASE
+CASE FlapFolderState OF
+	100:
+		FlapFolder1 := FALSE;
+		FlapFolder2 := FALSE;
+		BoxGripper := FALSE;
+		FlapResetTimer := TRUE;
+		FlapFolderState := 200;
+		
+	200:
+		IF FlapFolder1Up AND FlapFolder2Up THEN
+			BoxGrabber :=TRUE;
+			BoxGripper :=FALSE;
+			FlapFolderState := 300;
+		END_IF
+	210: 
+		IF NOT MainStackFull THEN //if theres no boxes we say no boxes and wait for that to be sorted
+			BoxStackNeeded := TRUE;
+			BottomClamp := FALSE;//drops the boxes on to the gripper
+			FlapFolderState := 300;
+		ELSE
+			FlapFolderState := 310;//if we have boxes carry on
+		END_IF
+	300: 
+		IF NOT BoxStackNeeded THEN
+			FlapFolderState := 310;//once boxes are loaded we carry on
+		END_IF
+	310:
+		IF BoxGrabberUp THEN
+			BottomClamp := FALSE;//drops the boxes on to the gripper
+			FlapFolderState := 400;
+		END_IF
+		
+		
+		
+	400:
+		IF BoxDropTimer.Q THEN//after a small timer for drop the stack is gripped again
+			BottomClamp :=TRUE;//after timer finnished 
+			BoxGripper :=TRUE;
+			FlapFolderState := 500;
+		END_IF
+		
+	500:	//may need a timer here 
+		BoxGrabber := FALSE;//box in the grabber is pulled off bottom of the stack
+		FlapFolderState := 600;
+		
+	600:
+		IF BoxGrabberDown THEN
+			FlapFolder1 := TRUE;
+			PlixRequest := TRUE;//must be set false in plix handler aftr shot
+			FlapFolderState := 610;
+		END_IF
+		
+	610:
+		IF FlapFolder1Down THEN
+			FlapFolderState :=710;
+		END_IF
+		
+	710:
+		IF NOT PlixRequest	THEN
+			//plix has been shot by plix head 
+			FlapFolderState := 720;
+		END_IF
+		
+	720:
+		//timer to wait a sec for plix to fly
+		IF PlixFlightTimer.Q THEN
+			FlapFolderState := 730;
+		END_IF
+	730:
+		IF NOT PlixSensor1 AND PlixSensor2 THEN
+			FlapFolder2 := TRUE;
+			FlapFolderState := 800;
+		END_IF
+	800: 
+		IF FlapFolder2Down THEN
+			BoxReady := TRUE;
+			FlapFolderState := 810;
+		END_IF
+		
+	
+	810:
+		IF BoxGrabbed THEN
+			BoxGripper := FALSE;
+			FlapFolderState := 820;
+		END_IF
+	820:
+		IF BoxRemoved THEN 
+			FlapFolderState := 100;
+		END_IF
+END_CASE
+
+
+
+
+CASE BoxRemoverState OF
+	100:
+		IF CarriageAtPickUp AND NOT BoxDropped THEN //if  carrige at pick up when turned on 
+			CarriageRam :=TRUE; //start it going to drop end
+			BoxRemoverState := 200;
+		END_IF
+		
+	200:
+		IF NOT CarriageAtPickUp THEN //soon as not at pick up 
+			CarriageWaitRam := TRUE;//turn on wait ram 
+			CarriageRam :=FALSE;// start carridge coming back to pick up
+			BoxRemoverState := 300;
+		END_IF
+		
+	300:
+		IF CarriageAtPickUp AND BoxReady THEN
+			CarriageWaitRam :=FALSE;
+			BoxRemoverState := 400;
+		END_IF
+	400: 
+		BoxReady := FALSE;
+		BoxGrabbed := TRUE;
+		BoxRemoverState := 500;
+	500:
+		IF NOT BoxGripper THEN
+			CarriageRam := TRUE;
+			BoxRemoverState := 600;
+		END_IF
+		
+	600:
+		IF CarriageAtDrop AND BoxDropRequest THEN
+			CarriageWaitRam := TRUE;
+			BoxGrabbed := FALSE;
+			BoxRemoverState := 700;
+		END_IF
+	700: 
+		IF BoxDropped THEN
+			BoxDelivered :=TRUE;
+			BoxRemoverState := 200;
+		END_IF
+END_CASE
+
+CASE BoxRefillState OF
+	100:
+		IF BoxStackNeeded THEN
+			BoxRefillState := 200;
+		END_IF
+		
+	200:
+		IF StackReadyToDrop THEN
+			BoxRefillState := 300;
+		END_IF
+	300:
+		StackReadyToDrop := FALSE;
+		BoxStackNeeded := FALSE;
+		TopClamp:= FALSE;
+		BoxRefillState := 100;
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="BoxHandler">
+      <LineId Id="397" Count="2" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="130" Count="2" />
+      <LineId Id="189" Count="4" />
+      <LineId Id="197" Count="1" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="390" Count="0" />
+      <LineId Id="247" Count="1" />
+      <LineId Id="82" Count="3" />
+      <LineId Id="88" Count="1" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="90" Count="1" />
+      <LineId Id="97" Count="1" />
+      <LineId Id="100" Count="1" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="391" Count="0" />
+      <LineId Id="393" Count="1" />
+      <LineId Id="396" Count="0" />
+      <LineId Id="395" Count="0" />
+      <LineId Id="392" Count="0" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="106" Count="2" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="428" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="429" Count="3" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="124" Count="3" />
+      <LineId Id="400" Count="0" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="401" Count="2" />
+      <LineId Id="437" Count="0" />
+      <LineId Id="405" Count="0" />
+      <LineId Id="408" Count="1" />
+      <LineId Id="404" Count="0" />
+      <LineId Id="410" Count="3" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="222" Count="1" />
+      <LineId Id="225" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="141" Count="1" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="209" Count="0" />
+      <LineId Id="208" Count="0" />
+      <LineId Id="143" Count="2" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="227" Count="2" />
+      <LineId Id="232" Count="0" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="251" Count="2" />
+      <LineId Id="258" Count="1" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="235" Count="1" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="239" Count="5" />
+      <LineId Id="153" Count="2" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="260" Count="1" />
+      <LineId Id="266" Count="0" />
+      <LineId Id="262" Count="1" />
+      <LineId Id="267" Count="3" />
+      <LineId Id="273" Count="0" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="159" Count="3" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="279" Count="3" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="283" Count="0" />
+      <LineId Id="289" Count="0" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="292" Count="0" />
+      <LineId Id="290" Count="0" />
+      <LineId Id="287" Count="0" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="296" Count="0" />
+      <LineId Id="298" Count="1" />
+      <LineId Id="302" Count="0" />
+      <LineId Id="304" Count="0" />
+      <LineId Id="306" Count="0" />
+      <LineId Id="305" Count="0" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="308" Count="2" />
+      <LineId Id="312" Count="2" />
+      <LineId Id="316" Count="0" />
+      <LineId Id="315" Count="0" />
+      <LineId Id="311" Count="0" />
+      <LineId Id="307" Count="0" />
+      <LineId Id="317" Count="1" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="321" Count="0" />
+      <LineId Id="319" Count="0" />
+      <LineId Id="323" Count="2" />
+      <LineId Id="327" Count="0" />
+      <LineId Id="326" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="416" Count="0" />
+      <LineId Id="415" Count="0" />
+      <LineId Id="417" Count="0" />
+      <LineId Id="419" Count="7" />
+      <LineId Id="433" Count="3" />
+      <LineId Id="438" Count="0" />
+      <LineId Id="418" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

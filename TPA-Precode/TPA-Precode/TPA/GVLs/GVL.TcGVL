@@ -9,12 +9,15 @@ VAR_GLOBAL
 	SystemTimeM							:WORD;
 	SystemTimeMs						:WORD;
 	ArduinoComsTimer					:TON;
-	ArduinoComsTime						:TIME		:=T#10MS;
+	ArduinoComsTime						:TIME		:=T#20MS;
 		
 	//Arduino				/////////////////////////////////////////
 		//States
 	ArduinoState 				AT %Q*	:USINT		:=0;//byte out 0
 	FanDyno						AT %Q*	:USINT		:=0;//byte out 1
+	OutArduino2					AT %Q*	:BYTE;			//byte out 2
+	OutArduino3					AT %Q*	:BYTE;			//byte out 3
+	WingSpeed					AT %Q*	:USINT		:=30;//byte out 4
 	Idle						:USINT	:= 0;
 	
 	Byte31IN					AT %I*	:USINT;
@@ -25,8 +28,7 @@ VAR_GLOBAL
 	Analog3   					AT %I*	:USINT;			//byte in 2
 	Average   					AT %I*	:USINT;			//byte in 3
 	Sensors						AT %I*	:USINT;			//byte in 12
-	OutArduino2					AT %Q*	:BYTE;			//byte out 2
-	OutArduino3					AT %Q*	:BYTE;			//byte out 3
+	
 		
 		//Inputs
 	ArduinoBusyBit			:BOOL;
@@ -34,10 +36,10 @@ VAR_GLOBAL
 		//Outputs
 	Pin3024V: BOOL;										//all the 24v o
 	Pin2524V: BOOL;
-	Pin3124V: BOOL;
-	Pin2724V: BOOL;
+	Pin3124V: BOOL;//dubles jets
+	Pin2724V: BOOL;//box grabber bottom
 	Pin3224V: BOOL;
-	Pin2824V: BOOL;
+	Pin2824V: BOOL;//Stack blast
 	Pin3324V: BOOL;
 	Pin2924V: BOOL;
 	Pin2424V: BOOL; //Plix Shooter
@@ -48,11 +50,14 @@ VAR_GLOBAL
 	Pin2324V: BOOL;
 	Pin3624V: BOOL;
 	Pin2224V: BOOL;
+	Pin3524V: BOOL;
+	Pin3724V: BOOL;
 	
 	
 	//Stepper				/////////////////////////////////////////
 	StackStepper : axis_ref;
 
+	PlixInBox: BOOL;
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

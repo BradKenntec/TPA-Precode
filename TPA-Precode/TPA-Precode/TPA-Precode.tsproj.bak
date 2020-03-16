@@ -1443,6 +1443,9 @@ External Setpoint Generation:
 				<Axis Id="1" CreateSymbols="true" AxisType="1">
 					<Name>Axis 1</Name>
 					<AxisPara>
+						<Dynamic Acceleration="7555.57" Deceleration="7555.57" Jerk="32111.1"/>
+						<PositionAreaControl Range="10"/>
+						<TargetPosControl Range="10" Time="0.05"/>
 						<OtherSettings AllowMotionCmdToSlave="true"/>
 					</AxisPara>
 					<Encoder Name="Enc" EncType="4">
@@ -1610,6 +1613,11 @@ External Setpoint Generation:
 					<Vars VarGrpType="1">
 						<Name>PlcTask Inputs</Name>
 						<Var>
+							<Name>GVL.Average</Name>
+							<Comment><![CDATA[byte in 3]]></Comment>
+							<Type>USINT</Type>
+						</Var>
+						<Var>
 							<Name>GVL.Byte31IN</Name>
 							<Type>USINT</Type>
 						</Var>
@@ -1634,11 +1642,6 @@ External Setpoint Generation:
 						<Var>
 							<Name>GVL.Analog3</Name>
 							<Comment><![CDATA[byte in 2]]></Comment>
-							<Type>USINT</Type>
-						</Var>
-						<Var>
-							<Name>GVL.Average</Name>
-							<Comment><![CDATA[byte in 3]]></Comment>
 							<Type>USINT</Type>
 						</Var>
 						<Var>
@@ -1672,6 +1675,11 @@ External Setpoint Generation:
 							<Name>GVL.OutArduino3</Name>
 							<Comment><![CDATA[byte out 3]]></Comment>
 							<Type>BYTE</Type>
+						</Var>
+						<Var>
+							<Name>GVL.WingSpeed</Name>
+							<Comment><![CDATA[byte out 4]]></Comment>
+							<Type>USINT</Type>
 						</Var>
 						<Var>
 							<Name>GVL.StackStepper.PlcToNc</Name>
@@ -2045,7 +2053,7 @@ External Setpoint Generation:
 								<Entry Name="Status__Ready to enable" Index="#x6010" Sub="#x01">
 									<Type>BIT</Type>
 								</Entry>
-								<Entry Name="Status__Ready" Index="#x6010" Sub="#x02">
+								<Entry Name="Status__Ready" Index="#x6010" Sub="#x02" Flags="#x00008020">
 									<Type>BIT</Type>
 								</Entry>
 								<Entry Name="Status__Warning" Index="#x6010" Sub="#x03">
@@ -2407,6 +2415,7 @@ External Setpoint Generation:
 				<Link VarA="PlcTask Outputs^GVL.FanDyno" VarB="Outputs^Byte1"/>
 				<Link VarA="PlcTask Outputs^GVL.OutArduino2" VarB="Outputs^Byte2"/>
 				<Link VarA="PlcTask Outputs^GVL.OutArduino3" VarB="Outputs^Byte3"/>
+				<Link VarA="PlcTask Outputs^GVL.WingSpeed" VarB="Outputs^Byte4"/>
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Axis 1">
 				<Link VarA="PlcTask Inputs^GVL.StackStepper.NcToPlc" VarB="Outputs^ToPlc"/>
