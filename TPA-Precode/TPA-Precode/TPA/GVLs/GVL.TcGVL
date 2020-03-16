@@ -28,31 +28,29 @@ VAR_GLOBAL
 	Analog3   					AT %I*	:USINT;			//byte in 2
 	Average   					AT %I*	:USINT;			//byte in 3
 	Sensors						AT %I*	:USINT;			//byte in 12
+	Sensors2						AT %I*	:USINT;			//byte in 13
 	
 		
 		//Inputs
 	ArduinoBusyBit			:BOOL;
 	
 		//Outputs
-	Pin3024V: BOOL;										//all the 24v o
-	Pin2524V: BOOL;
-	Pin3124V: BOOL;//dubles jets
-	Pin2724V: BOOL;//box grabber bottom
-	Pin3224V: BOOL;
-	Pin2824V: BOOL;//Stack blast
-	Pin3324V: BOOL;
-	Pin2924V: BOOL;
-	Pin2424V: BOOL; //Plix Shooter
-	Pin1424V: BOOL;
-	Pin2624V: BOOL;
-	Pin1524V: BOOL;
-	Pin3424V: BOOL;
-	Pin2324V: BOOL;
-	Pin3624V: BOOL;
-	Pin2224V: BOOL;
-	Pin3524V: BOOL;
-	Pin3724V: BOOL;
-	
+PlixShooter			: BOOL;	//Pin2224V;
+StackBlast			: BOOL;	//Pin2324V;
+DoubleJets			: BOOL;	//Pin2424V;
+CarriageWaitRam		: BOOL;	//Pin2524V;
+CarriageRam			: BOOL;	//Pin2624V;
+BoxGripper			: BOOL;	//Pin2724V;
+BoxGrabber			: BOOL;	//Pin2824V;
+FlapFolder1			: BOOL;	//Pin2924V;
+FlapFolder2			: BOOL;	//Pin3024V;
+BoxCart				: BOOL;	//Pin3124V;
+TopClamp			: BOOL;	//Pin3224V;
+BottomClamp			: BOOL;	//Pin3324V;
+BoxSizeAdjust		: BOOL;	//Pin3424V;
+o2					: BOOL;	//Pin3524V;
+o3					: BOOL;	//Pin3624V;
+o4					: BOOL;	//Pin3724V;
 	
 	//Stepper				/////////////////////////////////////////
 	StackStepper : axis_ref;

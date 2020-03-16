@@ -3163,13 +3163,16 @@ GVL.ArduinoState := MAIN.PlixHandlerFB.FanGo"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_98"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
                   <v>OnMouseUp</v>
                   <a cet="STSnippetInputAction">
                     <o>
                       <v n="STSnippet">"MAIN.PlixHandlerFB.PlixHandlerState := 10;
 MAIN.GoTime := MAIN.TimeSeconds;
-MAIN.PlixHandlerFB.StackStepperHalt :=FALSE;"</v>
+MAIN.PlixHandlerFB.StackStepperHalt :=FALSE;
+MAIN.POUFB.BoxLoaderState :=100;
+MAIN.POUFB.FlapFolderState :=100;
+MAIN.POUFB.BoxRemoverState :=100;"</v>
                     </o>
                   </a>
                 </d>
@@ -3339,7 +3342,7 @@ MAIN.PlixHandlerFB.StackStepperHalt :=FALSE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_100"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
@@ -3347,8 +3350,12 @@ MAIN.PlixHandlerFB.StackStepperHalt :=FALSE;"</v>
 GVL.ArduinoState := 0;
 MAIN.PlixHandlerFB.StackStepperStop := TRUE;
 MAIN.PlixHandlerFB.StackStepperRun := FALSE;
-GVL.Pin3324V := FALSE;
-
+GVL.DoublesJets := FALSE;
+GVL.StackBlast := FALSE;
+GVL.PlixShooter := FALSE;
+MAIN.POUFB.BoxLoaderState :=0;
+MAIN.POUFB.FlapFolderState :=0;
+MAIN.POUFB.BoxRemoverState :=0;
 
 MAIN.TotalTime := MAIN.TimeSeconds;
 
@@ -3529,17 +3536,17 @@ MAIN.PlixHandlerFB.Start :=TRUE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_102"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
-                      <v n="STSnippet">"GVL.Pin3324V := TRUE;"</v>
+                      <v n="STSnippet">"GVL.PlixShooter := TRUE;"</v>
                     </o>
                   </a>
                   <v>OnMouseUp</v>
                   <a cet="STSnippetInputAction">
                     <o>
-                      <v n="STSnippet">"GVL.Pin3324V := FALSE;"</v>
+                      <v n="STSnippet">"GVL.PlixShooter := FALSE;"</v>
                     </o>
                   </a>
                 </d>
@@ -3709,17 +3716,17 @@ MAIN.PlixHandlerFB.Start :=TRUE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_104"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
-                      <v n="STSnippet">"GVL.Pin2824V := TRUE;"</v>
+                      <v n="STSnippet">"GVL.StackBlast := TRUE;"</v>
                     </o>
                   </a>
                   <v>OnMouseUp</v>
                   <a cet="STSnippetInputAction">
                     <o>
-                      <v n="STSnippet">"GVL.Pin2824V := FALSE;"</v>
+                      <v n="STSnippet">"GVL.StackBlast := FALSE;"</v>
                     </o>
                   </a>
                 </d>
@@ -4223,17 +4230,17 @@ MAIN.PlixHandlerFB.Start :=TRUE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_110"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
-                      <v n="STSnippet">"GVL.Pin3124V := TRUE;"</v>
+                      <v n="STSnippet">"GVL.DoublesJets := TRUE;"</v>
                     </o>
                   </a>
                   <v>OnMouseUp</v>
                   <a cet="STSnippetInputAction">
                     <o>
-                      <v n="STSnippet">"GVL.Pin3124V := FALSE;"</v>
+                      <v n="STSnippet">"GVL.DoublesJets := FALSE;"</v>
                     </o>
                   </a>
                 </d>
@@ -4403,17 +4410,17 @@ MAIN.PlixHandlerFB.Start :=TRUE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_112"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
-                      <v n="STSnippet">"GVL.Pin2724V := TRUE;"</v>
+                      <v n="STSnippet">"GVL.BottomClamp := TRUE;"</v>
                     </o>
                   </a>
                   <v>OnMouseUp</v>
                   <a cet="STSnippetInputAction">
                     <o>
-                      <v n="STSnippet">"GVL.Pin2724V := FALSE;"</v>
+                      <v n="STSnippet">"GVL.BottomClamp := FALSE;"</v>
                     </o>
                   </a>
                 </d>
@@ -4882,10 +4889,10 @@ MAIN.PlixHandlerFB.StackStepperStop := FALSE;"</v>
               <d n="FbMethods" t="CaseInsensitiveHashtable" ckt="String" cvt="Guid">
                 <v>FB_Init</v>
                 <v>e35d0750-717a-4819-af3d-9ec829618320</v>
-                <v>FB_Reinit</v>
-                <v>298de1e1-52ec-4192-8580-9d121fd9623c</v>
                 <v>FB_Exit</v>
                 <v>6dc313de-f8a4-4c94-aa7b-5d645ee1ec34</v>
+                <v>FB_Reinit</v>
+                <v>298de1e1-52ec-4192-8580-9d121fd9623c</v>
               </d>
               <v n="FbName">"NotImportant"</v>
               <v n="FbGuid">{38546c57-1923-483a-a1e5-4b704223a796}</v>
@@ -4977,6 +4984,7 @@ MAIN.PlixHandlerFB.StackStepperStop := FALSE;"</v>
         <Type n="Guid">System.Guid</Type>
         <Type n="Hashtable">System.Collections.Hashtable</Type>
         <Type n="HotkeyConfiguration">{6b108d46-58af-4e41-a3f4-174d8f160cc4}</Type>
+        <Type n="IInputAction[]">_3S.CoDeSys.VisualElem.IInputAction[], VisualElem, Version=3.5.13.0, Culture=neutral, PublicKeyToken=null</Type>
         <Type n="Int16">System.Int16</Type>
         <Type n="Int32">System.Int32</Type>
         <Type n="Int64">System.Int64</Type>

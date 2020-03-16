@@ -256,7 +256,7 @@ CASE PlixHandlerState OF
 		
 	400://up to head
 		IF Blast THEN 
-			GVL.Pin2824V := TRUE;
+			GVL.StackBlast := TRUE;
 		END_IF
 		Blast := FALSE;
 		StackStepperHalt :=FALSE;
@@ -269,7 +269,7 @@ CASE PlixHandlerState OF
 		
 		StackStepperRun := FALSE;
 		IF StackStepperAbsoluteDone THEN
-			GVL.Pin2824V := FALSE;
+			GVL.StackBlast := FALSE;
 		/////
 			
 			StackStepperPosition := StackStepperCurrentPosition - 400;
@@ -408,7 +408,7 @@ CASE PlixHandlerState OF
 			Delay(IN:=TRUE, PT:=T#500MS);
 			IF Delay.Q THEN
 				Delay(IN:=FALSE);
-				GVL.Pin3124V := TRUE;
+				GVL.DoubleJets := TRUE;
 				//GVL.LeftAirJet := TRUE;
 				PlixHandlerState := 1200; 
 			END_IF
@@ -421,7 +421,7 @@ CASE PlixHandlerState OF
 			Delay(IN:=TRUE, PT:=T#500MS);
 			IF Delay.Q THEN
 				Delay(IN:=FALSE);
-				GVL.Pin3124V := FALSE;
+				GVL.DoubleJets := FALSE;
 				//GVL.RightAirJet := FALSE;
 				PlixHandlerState := 1300;
 			END_IF
@@ -457,7 +457,7 @@ CASE PlixHandlerState OF
     	END_IF
 	2300:
 		IF GVL.ArduinoBusyBit THEN
-			GVL.Pin3324V :=TRUE;
+			GVL.PlixShooter :=TRUE;
 			PlixHandlerState := 2400;
 		END_IF
 	2400:
@@ -476,7 +476,7 @@ CASE PlixHandlerState OF
 		Delay(IN:=TRUE, PT:=T#100MS);
 		IF Delay.Q THEN
         	Delay(IN:=FALSE);
-			GVL.Pin3324V :=FALSE;
+			GVL.PlixShooter :=FALSE;
         	PlixHandlerState := 2800;
     	END_IF
 	2800:

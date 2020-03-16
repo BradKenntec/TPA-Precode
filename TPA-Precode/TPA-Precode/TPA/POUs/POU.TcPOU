@@ -28,8 +28,8 @@ VAR
 	
 		//INPUTS
 	
-			PlixSensor1					: BOOL;
-			PlixSensor2					: BOOL;
+			PlixSensor1					: BOOL; //sensor
+			PlixSensor2					: BOOL; //sensor
 			MainStackFull				: BOOL; //sensor
 			SecondaryStackFull			: BOOL; //sensor
 			LastBoxGone					: BOOL; //sensor
@@ -90,6 +90,23 @@ PlixFlightTimer(//time from the head shooting the plix to it landing in a box
 	IN := PlixRequest = FALSE,
 	PT := PlixFlightTime,);
 
+	
+PlixSensor1		 	:= GVL.Sensors.3;
+PlixSensor2 		:= GVL.Sensors.4;
+MainStackFull 		:= GVL.Sensors.5;
+SecondaryStackFull 	:= GVL.Sensors.6;
+LastBoxGone 		:= GVL.Sensors.7;
+BoxGrabberUp 		:= GVL.Sensors2.0;
+BoxGrabberDown		:= GVL.Sensors2.1;
+FlapFolder1Up		:= GVL.Sensors2.2;
+FlapFolder1Down		:= GVL.Sensors2.3;
+FlapFolder2Up 		:= GVL.Sensors2.4;
+FlapFolder2Down 	:= GVL.Sensors2.5;
+CarriageAtPickUp 	:= GVL.Sensors2.6;
+CarriageAtDrop 		:= GVL.Sensors2.7;
+	
+	
+	
 CASE BoxLoaderState OF
 	100: //idle state moves the box cart to the loading position and waits for boxes to be put on
 		BoxCart := FALSE;
@@ -279,7 +296,13 @@ CASE BoxRefillState OF
 END_CASE]]></ST>
     </Implementation>
     <LineIds Name="POU">
-      <LineId Id="69" Count="206" />
+      <LineId Id="69" Count="19" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="348" Count="10" />
+      <LineId Id="344" Count="3" />
+      <LineId Id="90" Count="185" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

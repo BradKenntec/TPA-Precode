@@ -1613,11 +1613,6 @@ External Setpoint Generation:
 					<Vars VarGrpType="1">
 						<Name>PlcTask Inputs</Name>
 						<Var>
-							<Name>GVL.Average</Name>
-							<Comment><![CDATA[byte in 3]]></Comment>
-							<Type>USINT</Type>
-						</Var>
-						<Var>
 							<Name>GVL.Byte31IN</Name>
 							<Type>USINT</Type>
 						</Var>
@@ -1645,8 +1640,18 @@ External Setpoint Generation:
 							<Type>USINT</Type>
 						</Var>
 						<Var>
+							<Name>GVL.Average</Name>
+							<Comment><![CDATA[byte in 3]]></Comment>
+							<Type>USINT</Type>
+						</Var>
+						<Var>
 							<Name>GVL.Sensors</Name>
 							<Comment><![CDATA[byte in 12]]></Comment>
+							<Type>USINT</Type>
+						</Var>
+						<Var>
+							<Name>GVL.Sensors2</Name>
+							<Comment><![CDATA[byte in 13]]></Comment>
 							<Type>USINT</Type>
 						</Var>
 						<Var>
