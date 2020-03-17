@@ -38,6 +38,7 @@ VAR
 	Delay 					:TON;
 	
 	PlixHandlerFB : PlixHandler;
+	POUFB : POU;
 END_VAR
 
 
@@ -46,24 +47,47 @@ END_VAR
       <ST><![CDATA[
 //Arduino					/////////////////////////////////////////
 	//IO Setup
-GVL.OutArduino2.0 := GVL.PlixShooter;		//Pin2224V;
-GVL.OutArduino2.1 := GVL.StackBlast;		//Pin2324V;
-GVL.OutArduino2.2 := GVL.DoubleJets;		//Pin2424V;
-GVL.OutArduino2.3 := GVL.CarriageWaitRam;	//Pin2524V;
-GVL.OutArduino2.4 := GVL.CarriageRam;		//Pin2624V;
-GVL.OutArduino2.5 := GVL.BoxGripper;		//Pin2724V;
-GVL.OutArduino2.6 := GVL.BoxGrabber;		//Pin2824V;
-GVL.OutArduino2.7 := GVL.FlapFolder1;		//Pin2924V;
-GVL.OutArduino3.7 := GVL.FlapFolder2;		//Pin3024V;
-GVL.OutArduino3.6 := GVL.BoxCart;			//Pin3124V;
-GVL.OutArduino3.5 := GVL.TopClamp;			//Pin3224V;
-GVL.OutArduino3.4 := GVL.BottomClamp;		//Pin3324V;
-GVL.OutArduino3.3 := GVL.BoxSizeAdjust;		//Pin3424V;
-GVL.OutArduino3.2 := GVL.o2;				//Pin3524V;
-GVL.OutArduino3.1 := GVL.o3;				//Pin3624V;
-GVL.OutArduino3.0 := GVL.o4;				//Pin3724V;
+GVL.OutArduino2.0 := GVL.PlixShooter;		//Pin22		16
+GVL.OutArduino2.1 := GVL.StackBlast;		//Pin23		14
+GVL.OutArduino2.2 := GVL.DoubleJets;		//Pin24		9
+GVL.OutArduino2.3 := GVL.TopClamp;			//Pin25		2
+GVL.OutArduino2.4 := GVL.CarriageRam;		//Pin26		11
+GVL.OutArduino2.5 := GVL.BoxSizeAdjust;		//Pin27		4
+GVL.OutArduino2.6 := GVL.BoxGripper;		//Pin28		6
+GVL.OutArduino2.7 := GVL.FlapFolder2;		//Pin29		8
+GVL.OutArduino3.7 := GVL.BoxCart;			//Pin30		1
+GVL.OutArduino3.6 := GVL.BottomClamp;		//Pin31		3
+GVL.OutArduino3.5 := GVL.BoxGrabber;		//Pin32		5
+GVL.OutArduino3.4 := GVL.FlapFolder1;		//Pin33		7
+GVL.OutArduino3.3 := GVL.BoxSizeAdjust;		//Pin34		13
+GVL.OutArduino3.2 := GVL.o2;				//Pin35		1
+GVL.OutArduino3.1 := GVL.o3;				//Pin36		15
+GVL.OutArduino3.0 := GVL.o4;				//Pin37		1
+
+//PlixShooter			: BOOL;	//Pin
+//StackBlast			: BOOL;	//Pin
+//DoubleJets			: BOOL;	//Pin
+//CarriageWaitRam		: BOOL;	//Pin
+//CarriageRam			: BOOL;	//Pin
+//BoxGripper			: BOOL;	//Pin28
+//BoxGrabber			: BOOL;	//Pin32
+//FlapFolder1			: BOOL;	//Pin33
+//FlapFolder2			: BOOL;	//Pin29 might need swapping
+//BoxCart				: BOOL;	//Pin30
+//TopClamp			: BOOL;	//Pin25
+//BottomClamp			: BOOL;	//Pin31
+//BoxSizeAdjust		: BOOL;	//Pin27
+//o2					: BOOL;	//Pin35
+//o3					: BOOL;	//Pin36
+//o4					: BOOL;	//Pin3
+
+
+
 GVL.ArduinoBusyBit := GVL.Byte31IN.0;
 PlixHandlerFB(
+	go :=TRUE,
+	);
+POUFB(
 	go :=TRUE,
 	);
 GVL.ArduinoComsTimer(
@@ -97,10 +121,16 @@ fbTime();
       <LineId Id="203" Count="0" />
       <LineId Id="374" Count="14" />
       <LineId Id="185" Count="0" />
+      <LineId Id="478" Count="0" />
+      <LineId Id="482" Count="14" />
+      <LineId Id="479" Count="2" />
+      <LineId Id="477" Count="0" />
       <LineId Id="253" Count="0" />
       <LineId Id="205" Count="0" />
       <LineId Id="390" Count="0" />
       <LineId Id="389" Count="0" />
+      <LineId Id="498" Count="1" />
+      <LineId Id="497" Count="0" />
       <LineId Id="431" Count="5" />
       <LineId Id="252" Count="0" />
       <LineId Id="245" Count="0" />

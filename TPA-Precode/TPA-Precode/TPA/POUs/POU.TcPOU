@@ -3,6 +3,7 @@
   <POU Name="POU" Id="{52aa0559-33a0-4d96-a025-90b91128d749}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK POU
 VAR_INPUT
+	go 								:	BOOL;
 END_VAR
 VAR_OUTPUT
 END_VAR
@@ -23,6 +24,8 @@ VAR
 		BoxRemover						: INT :=0;
 		BoxStackNeeded					: BOOL;
 		BoxRefillState					: INT;
+		
+		p								: BOOL;
 		
 	//ARDUINO				/////////////////////////////////////////
 	
@@ -105,7 +108,9 @@ FlapFolder2Down 	:= GVL.Sensors2.5;
 CarriageAtPickUp 	:= GVL.Sensors2.6;
 CarriageAtDrop 		:= GVL.Sensors2.7;
 	
-	
+IF go THEN
+	p := TRUE;
+END_IF
 	
 CASE BoxLoaderState OF
 	100: //idle state moves the box cart to the loading position and waits for boxes to be put on
@@ -117,7 +122,6 @@ CASE BoxLoaderState OF
 		IF MainStackFull AND NOT SecondaryStackFull AND BoxCartHome AND NOT TopClamp  THEN
 			BoxCart := TRUE;
 			BoxCartHome := FALSE;
-			BoxCartTimer := TRUE;
 			BoxLoaderState := 210;
 			
 		END_IF//move boxes over if no boxes left and stack ready to load.
@@ -132,7 +136,6 @@ CASE BoxLoaderState OF
 			BoxCart := FALSE;
 			//TopClamp := TRUE;
 			BoxCartHome := TRUE;
-			BoxCartTimer := TRUE;
 			StackReadyToDrop := TRUE;
 			BoxLoaderState := 400;
 		END_IF
@@ -147,7 +150,6 @@ CASE FlapFolderState OF
 		FlapFolder1 := FALSE;
 		FlapFolder2 := FALSE;
 		BoxGripper := FALSE;
-		FlapResetTimer := TRUE;
 		FlapFolderState := 200;
 		
 	200:
@@ -301,8 +303,13 @@ END_CASE]]></ST>
       <LineId Id="89" Count="0" />
       <LineId Id="343" Count="0" />
       <LineId Id="348" Count="10" />
-      <LineId Id="344" Count="3" />
-      <LineId Id="90" Count="185" />
+      <LineId Id="344" Count="1" />
+      <LineId Id="360" Count="1" />
+      <LineId Id="346" Count="1" />
+      <LineId Id="90" Count="9" />
+      <LineId Id="101" Count="13" />
+      <LineId Id="116" Count="13" />
+      <LineId Id="131" Count="144" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>
