@@ -28,7 +28,7 @@ VAR_GLOBAL
 	Analog3   					AT %I*	:USINT;			//byte in 2
 	Average   					AT %I*	:USINT;			//byte in 3
 	Sensors						AT %I*	:USINT;			//byte in 12
-	Sensors2					AT %I*	:USINT;			//byte in 13
+	Sensors2 					AT %I*	:USINT;			//byte in 13
 	
 		
 		//Inputs

@@ -1846,12 +1846,13 @@ External Setpoint Generation:
 		</Io>
 	</Project>
 	<Mappings>
-		<MappingInfo Identifier="{00000000-2001-0850-0020-500841000403}" Id="#x02030020"/>
-		<MappingInfo Identifier="{00000000-0020-0304-1000-040320000403}" Id="#x02030010"/>
+		<MappingInfo Identifier="{00000000-2001-0850-0020-500820000403}" Id="#x02030010"/>
 		<MappingInfo Identifier="{05000010-2001-0850-1000-040300205008}" Id="#x02030030" Watchdog="14000000040000000400000004000000"/>
 		<OwnerA Name="TIPC^TPA^TPA Instance">
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Box 1 (EasyCAT 32+32 rev 1)">
 				<Link VarA="PlcTask Inputs^GVL.Sensors" VarB="Inputs^Byte12"/>
+				<Link VarA="PlcTask Outputs^GVL.OutArduino2" VarB="Outputs^Byte2"/>
+				<Link VarA="PlcTask Outputs^GVL.OutArduino3" VarB="Outputs^Byte3"/>
 			</OwnerB>
 			<OwnerB Name="TINC^NC-Task 1 SAF^Axes^Axis 1">
 				<Link VarA="PlcTask Inputs^GVL.StackStepper.NcToPlc" VarB="Outputs^ToPlc"/>

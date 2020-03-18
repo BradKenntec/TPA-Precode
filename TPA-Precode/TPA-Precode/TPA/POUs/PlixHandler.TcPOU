@@ -172,8 +172,8 @@ ResetStackStepper(
 IF go THEN
 	StackStepperEnable := TRUE;
 END_IF
-StackSensor2 := GVL.Sensors.1;
-BottomEndStop :=GVL.Sensors.2;
+StackSensor2 := GVL.Sensors2.0;
+BottomEndStop :=GVL.Sensors2.1;
 //StackStepperZeroPosition := TRUE;//sometimes after many restarts the position can be massive and cause problems 
 
 

@@ -24,7 +24,7 @@ VAR
 		BoxRemover						: INT :=0;
 		BoxStackNeeded					: BOOL;
 		BoxRefillState					: INT;
-		
+		DryRun							: BOOL;
 		p								: BOOL;
 		
 	//ARDUINO				/////////////////////////////////////////
@@ -46,26 +46,20 @@ VAR
 			CarriageAtDrop 				: BOOL;//sensor
 					
 		//OUTPUTS
-			CarriageWaitRam				: BOOL;
-			CarriageRam					: BOOL;
-			BoxGripper					: BOOL;
-			BoxGrabber					: BOOL;
-			FlapFolder1					: BOOL;
-			FlapFolder2					: BOOL;
-			BoxCart						: BOOL;
-			TopClamp					: BOOL;
-			BottomClamp					: BOOL;
+			
 			
 			
 	//TIME					/////////////////////////////////////////
 		BoxCartTimer					: TON;
-		BoxCartTime						: TIME := T#2000MS;
+		BoxCartTime						: TIME := T#8000MS;
 		FlapResetTimer					: TON;
-		FlapResetTime					: TIME := T#500MS;
+		FlapResetTime					: TIME := T#2000MS;
 		BoxDropTimer					: TON;
-		BoxDropTime						: TIME := T#500MS;
+		BoxDropTime						: TIME := T#2000MS;
 		PlixFlightTimer 				: TON;
-		PlixFlightTime 					: TIME := T#500MS;
+		PlixFlightTime 					: TIME := T#2000MS;
+		DownTimer						: TON;
+		DownTime	 					: TIME := T#3000MS;
 	
 	
 		StackReadyToDrop: BOOL;
@@ -78,15 +72,18 @@ END_VAR
 
 //need timer for how long boxes have been on cart, make sure theyre stable(maybe a button to say ready
 BoxCartTimer(
-	IN := BoxCart = TRUE,
+	IN := GVL.BoxCart = TRUE,
 	PT := BoxCartTime,);
+DownTimer(
+	IN := BoxGrabberDown = FALSE,
+	PT := DownTime,);
 
 FlapResetTimer(//dont need this as we have the sensors 
-	IN := FlapFolder2 = FALSE,
+	IN := GVL.FlapFolder2 = FALSE,
 	PT := FlapResetTime,);
 	
 BoxDropTimer(//boxes dropped onto the graber before its gripped and pulled off
-	IN := BottomClamp = FALSE,
+	IN := GVL.BottomClamp = TRUE,
 	PT := BoxDropTime,);
 	
 PlixFlightTimer(//time from the head shooting the plix to it landing in a box
@@ -95,18 +92,18 @@ PlixFlightTimer(//time from the head shooting the plix to it landing in a box
 
 	
 PlixSensor1		 	:= GVL.Sensors.3;
-PlixSensor2 		:= GVL.Sensors.4;
-MainStackFull 		:= GVL.Sensors.5;
-SecondaryStackFull 	:= GVL.Sensors.6;
-LastBoxGone 		:= GVL.Sensors.7;
-BoxGrabberUp 		:= GVL.Sensors2.0;
-BoxGrabberDown		:= GVL.Sensors2.1;
+PlixSensor2 		:= GVL.Sensors.5;
+MainStackFull 		:= GVL.Sensors.1;
+SecondaryStackFull 	:= GVL.Sensors.0;
+LastBoxGone 		:= GVL.Sensors.2;
+BoxGrabberUp 		:= GVL.Sensors2.6;
+BoxGrabberDown		:= GVL.Sensors.4;
 FlapFolder1Up		:= GVL.Sensors2.2;
 FlapFolder1Down		:= GVL.Sensors2.3;
 FlapFolder2Up 		:= GVL.Sensors2.4;
 FlapFolder2Down 	:= GVL.Sensors2.5;
-CarriageAtPickUp 	:= GVL.Sensors2.6;
-CarriageAtDrop 		:= GVL.Sensors2.7;
+CarriageAtPickUp 	:= GVL.Sensors.6;
+CarriageAtDrop 		:= GVL.Sensors.7;
 	
 IF go THEN
 	p := TRUE;
@@ -114,26 +111,28 @@ END_IF
 	
 CASE BoxLoaderState OF
 	100: //idle state moves the box cart to the loading position and waits for boxes to be put on
-		BoxCart := FALSE;
+		GVL.BoxCart := FALSE;
 		BoxCartHome := TRUE;//so we know were at the home end of the rams travel
+		GVL.TopClamp := TRUE;
+		GVL.BottomClamp := TRUE;
 		BoxLoaderState := 200;
 		
 	200:// if we have boxes in the cart and there are no boxes in the machine and clamp is open we move the stack over
-		IF MainStackFull AND NOT SecondaryStackFull AND BoxCartHome AND NOT TopClamp  THEN
-			BoxCart := TRUE;
+		IF MainStackFull AND NOT SecondaryStackFull AND BoxCartHome AND GVL.TopClamp OR DryRun THEN
+			GVL.BoxCart := TRUE;
 			BoxCartHome := FALSE;
 			BoxLoaderState := 210;
 			
 		END_IF//move boxes over if no boxes left and stack ready to load.
 	210:
-		IF BoxCartTimer.Q AND SecondaryStackFull THEN//after timer and if stack is on the cart we clamp it in place.
-			TopClamp:=TRUE;
+		IF (NOT MainStackFull OR DryRun) THEN//after timer and if stack is on the cart we clamp it in place.
+			GVL.TopClamp:=FALSE;
 			BoxLoaderState :=300;
 		END_IF
 		
 	300:
-		IF TopClamp AND SecondaryStackFull THEN//once clamped we remove the cart ready to drop stack 
-			BoxCart := FALSE;
+		IF NOT GVL.TopClamp AND BoxCartTimer.Q AND SecondaryStackFull OR DryRun THEN//once clamped we remove the cart ready to drop stack 
+			GVL.BoxCart := FALSE;
 			//TopClamp := TRUE;
 			BoxCartHome := TRUE;
 			StackReadyToDrop := TRUE;
@@ -141,29 +140,30 @@ CASE BoxLoaderState OF
 		END_IF
 	400:	
 		IF NOT StackReadyToDrop THEN
-			BoxLoaderState := 100;
+			BoxLoaderState := 100; 
 		END_IF
 		
 END_CASE
 CASE FlapFolderState OF
 	100:
-		FlapFolder1 := FALSE;
-		FlapFolder2 := FALSE;
-		BoxGripper := FALSE;
+		GVL.FlapFolder1 := FALSE;
+		GVL.FlapFolder2 := FALSE;
+		GVL.BoxGripper := FALSE;
 		FlapFolderState := 200;
 		
 	200:
-		IF FlapFolder1Up AND FlapFolder2Up THEN
-			BoxGrabber :=TRUE;
-			BoxGripper :=FALSE;
-			FlapFolderState := 300;
+		IF NOT FlapFolder1Up AND NOT FlapFolder2Up THEN
+			GVL.BoxGrabber :=TRUE;
+			GVL.BoxGripper :=FALSE;
+			FlapFolderState := 210
+;
 		END_IF
 	210: 
-		IF NOT MainStackFull THEN //if theres no boxes we say no boxes and wait for that to be sorted
+		IF MainStackFull AND BoxGrabberUp THEN //if theres no boxes we say no boxes and wait for that to be sorted
 			BoxStackNeeded := TRUE;
-			BottomClamp := FALSE;//drops the boxes on to the gripper
+			GVL.BottomClamp := TRUE;//drops the boxes on to the gripper
 			FlapFolderState := 300;
-		ELSE
+		ELSIF BoxGrabberUp THEN
 			FlapFolderState := 310;//if we have boxes carry on
 		END_IF
 	300: 
@@ -171,8 +171,8 @@ CASE FlapFolderState OF
 			FlapFolderState := 310;//once boxes are loaded we carry on
 		END_IF
 	310:
-		IF BoxGrabberUp THEN
-			BottomClamp := FALSE;//drops the boxes on to the gripper
+		IF GVL.BoxGrabber THEN
+			GVL.BottomClamp := TRUE;//drops the boxes on to the gripper
 			FlapFolderState := 400;
 		END_IF
 		
@@ -180,18 +180,18 @@ CASE FlapFolderState OF
 		
 	400:
 		IF BoxDropTimer.Q THEN//after a small timer for drop the stack is gripped again
-			BottomClamp :=TRUE;//after timer finnished 
-			BoxGripper :=TRUE;
+			GVL.BottomClamp :=FALSE;//after timer finnished 
+			GVL.BoxGripper :=TRUE;
 			FlapFolderState := 500;
 		END_IF
 		
 	500:	//may need a timer here 
-		BoxGrabber := FALSE;//box in the grabber is pulled off bottom of the stack
+		GVL.BoxGrabber := FALSE;//box in the grabber is pulled off bottom of the stack
 		FlapFolderState := 600;
 		
 	600:
-		IF BoxGrabberDown THEN
-			FlapFolder1 := TRUE;
+		IF NOT BoxGrabberDown AND DownTimer.Q THEN
+			GVL.FlapFolder1 := TRUE;
 			PlixRequest := TRUE;//must be set false in plix handler aftr shot
 			FlapFolderState := 610;
 		END_IF
@@ -213,8 +213,8 @@ CASE FlapFolderState OF
 			FlapFolderState := 730;
 		END_IF
 	730:
-		IF NOT PlixSensor1 AND PlixSensor2 THEN
-			FlapFolder2 := TRUE;
+		IF NOT PlixSensor1 AND PlixSensor2 OR DryRun THEN
+			GVL.FlapFolder2 := TRUE;
 			FlapFolderState := 800;
 		END_IF
 	800: 
@@ -226,7 +226,7 @@ CASE FlapFolderState OF
 	
 	810:
 		IF BoxGrabbed THEN
-			BoxGripper := FALSE;
+			GVL.BoxGripper := FALSE;
 			FlapFolderState := 820;
 		END_IF
 	820:
@@ -241,20 +241,20 @@ END_CASE
 CASE BoxRemoverState OF
 	100:
 		IF CarriageAtPickUp AND NOT BoxDropped THEN //if  carrige at pick up when turned on 
-			CarriageRam :=TRUE; //start it going to drop end
+			GVL.CarriageRam :=TRUE; //start it going to drop end
 			BoxRemoverState := 200;
 		END_IF
 		
 	200:
-		IF NOT CarriageAtPickUp THEN //soon as not at pick up 
-			CarriageWaitRam := TRUE;//turn on wait ram 
-			CarriageRam :=FALSE;// start carridge coming back to pick up
+		IF NOT CarriageAtPickUp OR DryRun THEN //soon as not at pick up 
+			GVL.CarriageWaitRam := TRUE;//turn on wait ram 
+			GVL.CarriageRam :=FALSE;// start carridge coming back to pick up
 			BoxRemoverState := 300;
 		END_IF
 		
 	300:
-		IF CarriageAtPickUp AND BoxReady THEN
-			CarriageWaitRam :=FALSE;
+		IF (CarriageAtPickUp OR DryRun) AND BoxReady THEN
+			GVL.CarriageWaitRam :=FALSE;
 			BoxRemoverState := 400;
 		END_IF
 	400: 
@@ -262,14 +262,14 @@ CASE BoxRemoverState OF
 		BoxGrabbed := TRUE;
 		BoxRemoverState := 500;
 	500:
-		IF NOT BoxGripper THEN
-			CarriageRam := TRUE;
+		IF NOT GVL.BoxGripper THEN
+			GVL.CarriageRam := TRUE;
 			BoxRemoverState := 600;
 		END_IF
 		
 	600:
 		IF CarriageAtDrop AND BoxDropRequest THEN
-			CarriageWaitRam := TRUE;
+			GVL.CarriageWaitRam := TRUE;
 			BoxGrabbed := FALSE;
 			BoxRemoverState := 700;
 		END_IF
@@ -293,12 +293,15 @@ CASE BoxRefillState OF
 	300:
 		StackReadyToDrop := FALSE;
 		BoxStackNeeded := FALSE;
-		TopClamp:= FALSE;
+		GVL.TopClamp:= FALSE;
 		BoxRefillState := 100;
 END_CASE]]></ST>
     </Implementation>
     <LineIds Name="POU">
-      <LineId Id="69" Count="19" />
+      <LineId Id="69" Count="7" />
+      <LineId Id="373" Count="1" />
+      <LineId Id="372" Count="0" />
+      <LineId Id="77" Count="11" />
       <LineId Id="342" Count="0" />
       <LineId Id="89" Count="0" />
       <LineId Id="343" Count="0" />
@@ -306,10 +309,14 @@ END_CASE]]></ST>
       <LineId Id="344" Count="1" />
       <LineId Id="360" Count="1" />
       <LineId Id="346" Count="1" />
-      <LineId Id="90" Count="9" />
+      <LineId Id="90" Count="3" />
+      <LineId Id="364" Count="1" />
+      <LineId Id="94" Count="5" />
       <LineId Id="101" Count="13" />
       <LineId Id="116" Count="13" />
-      <LineId Id="131" Count="144" />
+      <LineId Id="131" Count="6" />
+      <LineId Id="366" Count="0" />
+      <LineId Id="138" Count="137" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>
