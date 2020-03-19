@@ -51,11 +51,12 @@ VAR
 			
 	//TIME					/////////////////////////////////////////
 		BoxCartTimer					: TON;
+		BoxCartHomeTimer					: TON;
 		BoxCartTime						: TIME := T#8000MS;
 		FlapResetTimer					: TON;
 		FlapResetTime					: TIME := T#2000MS;
 		BoxDropTimer					: TON;
-		BoxDropTime						: TIME := T#2000MS;
+		BoxDropTime						: TIME := T#5000MS;
 		PlixFlightTimer 				: TON;
 		PlixFlightTime 					: TIME := T#2000MS;
 		DownTimer						: TON;
@@ -73,6 +74,9 @@ END_VAR
 //need timer for how long boxes have been on cart, make sure theyre stable(maybe a button to say ready
 BoxCartTimer(
 	IN := GVL.BoxCart = TRUE,
+	PT := BoxCartTime,);
+BoxCartHomeTimer(
+	IN := GVL.BoxCart = FALSE,
 	PT := BoxCartTime,);
 DownTimer(
 	IN := BoxGrabberDown = FALSE,
@@ -126,26 +130,34 @@ CASE BoxLoaderState OF
 		END_IF//move boxes over if no boxes left and stack ready to load.
 	210:
 		IF (NOT MainStackFull OR DryRun) THEN//after timer and if stack is on the cart we clamp it in place.
-			GVL.TopClamp:=FALSE;
+			
 			BoxLoaderState :=300;
 		END_IF
 		
 	300:
-		IF NOT GVL.TopClamp AND BoxCartTimer.Q AND SecondaryStackFull OR DryRun THEN//once clamped we remove the cart ready to drop stack 
+		IF BoxCartTimer.Q AND SecondaryStackFull OR DryRun THEN//once clamped we remove the cart ready to drop stack 
 			GVL.BoxCart := FALSE;
+			GVL.TopClamp:=FALSE;
 			//TopClamp := TRUE;
-			BoxCartHome := TRUE;
-			StackReadyToDrop := TRUE;
+			
 			BoxLoaderState := 400;
 		END_IF
 	400:	
+		IF BoxCartHomeTimer.Q THEN
+			BoxCartHome := TRUE;
+			StackReadyToDrop := TRUE;
+			BoxLoaderState := 500;
+		END_IF
+	
+	
+	500:
 		IF NOT StackReadyToDrop THEN
 			BoxLoaderState := 100; 
 		END_IF
 		
 END_CASE
 CASE FlapFolderState OF
-	100:
+	100: 
 		GVL.FlapFolder1 := FALSE;
 		GVL.FlapFolder2 := FALSE;
 		GVL.BoxGripper := FALSE;
@@ -159,20 +171,19 @@ CASE FlapFolderState OF
 ;
 		END_IF
 	210: 
-		IF MainStackFull AND BoxGrabberUp THEN //if theres no boxes we say no boxes and wait for that to be sorted
+		IF  StackReadyToDrop THEN //NOT MainStackFull AND //if theres no boxes we say no boxes and wait for that to be sorted
 			BoxStackNeeded := TRUE;
 			GVL.BottomClamp := TRUE;//drops the boxes on to the gripper
-			FlapFolderState := 300;
-		ELSIF BoxGrabberUp THEN
-			FlapFolderState := 310;//if we have boxes carry on
+			GVL.TopClamp := TRUE;
+			FlapFolderState := 310;
 		END_IF
 	300: 
-		IF NOT BoxStackNeeded THEN
-			FlapFolderState := 310;//once boxes are loaded we carry on
+		IF NOT StackReadyToDrop THEN
+			FlapFolderState := 400;//once boxes are loaded we carry on
 		END_IF
 	310:
 		IF GVL.BoxGrabber THEN
-			GVL.BottomClamp := TRUE;//drops the boxes on to the gripper
+			//GVL.BottomClamp := TRUE;//drops the boxes on to the gripper
 			FlapFolderState := 400;
 		END_IF
 		
@@ -291,14 +302,22 @@ CASE BoxRefillState OF
 			BoxRefillState := 300;
 		END_IF
 	300:
-		StackReadyToDrop := FALSE;
-		BoxStackNeeded := FALSE;
-		GVL.TopClamp:= FALSE;
-		BoxRefillState := 100;
+		
+		GVL.TopClamp:= TRUE;
+		BoxRefillState := 400;
+	400:
+		IF BoxDropTimer.Q THEN
+			StackReadyToDrop := FALSE;
+			BoxStackNeeded := FALSE;
+			BoxRefillState := 400;	
+		END_IF
+		
 END_CASE]]></ST>
     </Implementation>
     <LineIds Name="POU">
       <LineId Id="69" Count="7" />
+      <LineId Id="386" Count="1" />
+      <LineId Id="385" Count="0" />
       <LineId Id="373" Count="1" />
       <LineId Id="372" Count="0" />
       <LineId Id="77" Count="11" />
@@ -312,11 +331,27 @@ END_CASE]]></ST>
       <LineId Id="90" Count="3" />
       <LineId Id="364" Count="1" />
       <LineId Id="94" Count="5" />
-      <LineId Id="101" Count="13" />
-      <LineId Id="116" Count="13" />
+      <LineId Id="101" Count="11" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="113" Count="1" />
+      <LineId Id="117" Count="2" />
+      <LineId Id="389" Count="0" />
+      <LineId Id="395" Count="1" />
+      <LineId Id="393" Count="1" />
+      <LineId Id="390" Count="2" />
+      <LineId Id="120" Count="9" />
       <LineId Id="131" Count="6" />
       <LineId Id="366" Count="0" />
-      <LineId Id="138" Count="137" />
+      <LineId Id="138" Count="4" />
+      <LineId Id="397" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="146" Count="126" />
+      <LineId Id="274" Count="1" />
+      <LineId Id="376" Count="0" />
+      <LineId Id="380" Count="0" />
+      <LineId Id="383" Count="1" />
+      <LineId Id="381" Count="1" />
+      <LineId Id="378" Count="0" />
       <LineId Id="9" Count="0" />
     </LineIds>
   </POU>

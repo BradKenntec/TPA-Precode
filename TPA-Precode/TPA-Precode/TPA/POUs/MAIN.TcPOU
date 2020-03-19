@@ -49,7 +49,7 @@ END_VAR
 	//IO Setup
 GVL.OutArduino2.0 := GVL.PlixShooter;		//Pin22		16
 GVL.OutArduino2.1 := GVL.StackBlast;		//Pin23		14
-GVL.OutArduino2.2 := GVL.DoubleJets;		//Pin24		9
+GVL.OutArduino2.2 := GVL.CarriageWaitRam;	//Pin24	 	9
 GVL.OutArduino2.3 := GVL.TopClamp;			//Pin25		2
 GVL.OutArduino2.4 := GVL.CarriageRam;		//Pin26		11
 GVL.OutArduino2.5 := GVL.BoxSizeAdjust;		//Pin27		4

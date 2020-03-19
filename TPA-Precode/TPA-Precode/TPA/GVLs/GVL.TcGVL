@@ -40,15 +40,15 @@ VAR_GLOBAL
 PlixShooter			: BOOL;	//Pin
 StackBlast			: BOOL;	//Pin
 DoubleJets			: BOOL;	//Pin
-CarriageWaitRam		: BOOL;	//Pin
-CarriageRam			: BOOL;	//Pin
+CarriageWaitRam		: BOOL;	//Pin24
+CarriageRam			: BOOL;	//Pin26
 BoxGripper			: BOOL;	//Pin28
 BoxGrabber			: BOOL;	//Pin32
 FlapFolder1			: BOOL;	//Pin33
 FlapFolder2			: BOOL;	//Pin29 might need swapping
 BoxCart				: BOOL;	//Pin30
-TopClamp			: BOOL;	//Pin25
-BottomClamp			: BOOL;	//Pin31
+TopClamp			: BOOL := TRUE;	//Pin25
+BottomClamp			: BOOL := TRUE;	//Pin31
 BoxSizeAdjust		: BOOL;	//Pin27
 o2					: BOOL;	//Pin35
 o3					: BOOL;	//Pin36
