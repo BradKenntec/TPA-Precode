@@ -3163,7 +3163,7 @@ GVL.ArduinoState := MAIN.PlixHandlerFB.FanGo"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_98"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
                   <v>OnMouseUp</v>
                   <a cet="STSnippetInputAction">
                     <o>
@@ -3357,6 +3357,7 @@ GVL.PlixShooter := FALSE;
 MAIN.POUFB.BoxLoaderState :=0;
 MAIN.POUFB.FlapFolderState :=0;
 MAIN.POUFB.BoxRemoverState :=0;
+MAIN.POUFB.BoxRefillState :=0;
 
 MAIN.TotalTime := MAIN.TimeSeconds;
 
@@ -3537,7 +3538,7 @@ MAIN.PlixHandlerFB.Start :=TRUE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_102"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
@@ -3717,7 +3718,7 @@ MAIN.PlixHandlerFB.Start :=TRUE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_104"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
@@ -4231,7 +4232,7 @@ MAIN.PlixHandlerFB.Start :=TRUE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_110"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
@@ -4411,7 +4412,7 @@ MAIN.PlixHandlerFB.Start :=TRUE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_112"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
@@ -4947,11 +4948,12 @@ MAIN.PlixHandlerFB.StackStepperStop := FALSE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_118"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
-                      <v n="STSnippet">"MAIN.POUFB.PlixRequest := FALSE;"</v>
+                      <v n="STSnippet">"MAIN.POUFB.PlixRequest := FALSE;
+MAIN.POUFB.PlixSkip := TRUE"</v>
                     </o>
                   </a>
                   <v>OnMouseUp</v>
@@ -5127,7 +5129,7 @@ MAIN.PlixHandlerFB.StackStepperStop := FALSE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_120"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
@@ -5315,6 +5317,12 @@ MAIN.PlixHandlerFB.StackStepperStop := FALSE;"</v>
 MAIN.POUFB.BoxDropped := TRUE;"</v>
                     </o>
                   </a>
+                  <v>OnMouseUp</v>
+                  <a cet="STSnippetInputAction">
+                    <o>
+                      <v n="STSnippet">"MAIN.POUFB.BoxDropped := FALSE;"</v>
+                    </o>
+                  </a>
                 </d>
                 <v n="VisualElementIdentification">{75a9e0f4-3094-4d69-bcf9-67a0bb74c2b0}</v>
                 <v n="VisualElementOwningObjectGuid">{7ce1bdcb-bb5d-4f98-af3f-2564caddf423}</v>
@@ -5482,7 +5490,7 @@ MAIN.POUFB.BoxDropped := TRUE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_124"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
@@ -5656,7 +5664,7 @@ MAIN.POUFB.BoxDropped := TRUE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_128"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
@@ -5831,7 +5839,7 @@ MAIN.POUFB.BoxRemoved := TRUE;"</v>
                 <v n="VisualElementIdentifier">"GenElemInst_130"</v>
                 <n n="VisualElementOfflinePaintCommands" />
                 <n n="VisualElementFrameInformation" />
-                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="IInputAction[]">
+                <d n="VisualElementInputActions" t="Hashtable" ckt="String" cvt="STSnippetInputAction[]">
                   <v>OnMouseDown</v>
                   <a cet="STSnippetInputAction">
                     <o>
@@ -5995,7 +6003,7 @@ MAIN.POUFB.BoxRemoved := TRUE;"</v>
             </o>
             <v n="DialogDut">{5afb1ed5-aaa9-46d1-9427-4fb15371622d}</v>
           </o>
-          <v n="LastUsedIdForIdentifier">132</v>
+          <v n="LastUsedIdForIdentifier">134</v>
           <o n="TextDocument" t="TextDocument">
             <a n="TextLines" cet="TextLine">
               <o>

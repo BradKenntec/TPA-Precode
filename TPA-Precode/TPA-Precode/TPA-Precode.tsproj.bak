@@ -1851,6 +1851,7 @@ External Setpoint Generation:
 		<OwnerA Name="TIPC^TPA^TPA Instance">
 			<OwnerB Name="TIID^Device 3 (EtherCAT)^Box 1 (EasyCAT 32+32 rev 1)">
 				<Link VarA="PlcTask Inputs^GVL.Sensors" VarB="Inputs^Byte12"/>
+				<Link VarA="PlcTask Inputs^GVL.Sensors2" VarB="Inputs^Byte13"/>
 				<Link VarA="PlcTask Outputs^GVL.OutArduino2" VarB="Outputs^Byte2"/>
 				<Link VarA="PlcTask Outputs^GVL.OutArduino3" VarB="Outputs^Byte3"/>
 			</OwnerB>
