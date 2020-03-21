@@ -134,25 +134,27 @@ END_IF
 	
 CASE BoxLoaderState OF
 	100: //idle state moves the box cart to the loading position and waits for boxes to be put on
-		GVL.BoxCart := FALSE;
+		//GVL.BoxCart := FALSE;
 		BoxCartHome := TRUE;//so we know were at the home end of the rams travel
-		GVL.TopClamp := TRUE;
+		//GVL.TopClamp := TRUE;
 		//GVL.BottomClamp := TRUE;
 		BoxLoaderState := 110;
 	110:
 		IF NOT LastBoxGone OR SkipStackLoad THEN 
-			GVL.TopClamp := FALSE;
+			//GVL.TopClamp := FALSE;
 			StackReadyToDrop := TRUE;
-			BoxLoaderState := 500;
+			BoxLoaderState := 200;
 		ELSIF LastBoxGone AND NOT SkipStackLoad THEN
 			BoxLoaderState := 200;
 		END_IF
 	200:// if we have boxes in the cart and there are no boxes in the machine and clamp is open we move the stack over
-		IF MainStackFull AND (NOT SecondaryStackFull OR DryRun) AND BoxCartHome AND GVL.TopClamp THEN
+		IF MainStackFull AND (NOT SecondaryStackFull OR DryRun) AND BoxCartHome THEN
 			GVL.BoxCart := TRUE;
+			GVL.TopClamp := TRUE;
 			BoxCartHome := FALSE;
 			BoxLoaderState := 300;
-			
+		ELSE 
+			BoxLoaderState := 100;
 		END_IF//move boxes over if no boxes left and stack ready to load.
 	
 	300:
@@ -172,12 +174,11 @@ CASE BoxLoaderState OF
 	
 	
 	500:
-		IF NOT StackReadyToDrop THEN//once dropped we return to start state
-			IF DryRun THEN
-				SkipStackLoad := TRUE;
-			END_IF
-			BoxLoaderState := 100; 
+		
+		IF DryRun THEN
+			SkipStackLoad := TRUE;
 		END_IF
+		BoxLoaderState := 100; 
 		
 END_CASE
 CASE FlapFolderState OF
@@ -199,6 +200,7 @@ CASE FlapFolderState OF
 			GVL.BottomClamp := TRUE;//drops the boxes on to the gripper
 			GVL.TopClamp := TRUE;
 			GVL.BoxGripper :=FALSE;//clamp box
+			StackReadyToDrop := FALSE;
 			FlapFolderState := 400;
 		END_IF
 	
@@ -206,6 +208,7 @@ CASE FlapFolderState OF
 		IF BoxDropTimer.Q THEN//after a small timer for drop the stack is gripped again
 			GVL.BottomClamp := FALSE;//after timer finnished clamp stakc
 			GVL.BoxGripper :=TRUE;//clamp box
+			StackReadyToDrop := FALSE;
 			FlapFolderState := 450;
 		END_IF
 	450:
@@ -344,11 +347,14 @@ CASE BoxRefillState OF
 	300:
 		
 		GVL.TopClamp:= TRUE;
+		GVL.BottomClamp:= TRUE;
 		BoxRefillState := 400;
 	400:
 		IF BoxDropTimer.Q THEN
 			StackReadyToDrop := FALSE;
 			BoxStackNeeded := FALSE;
+			GVL.TopClamp:= FALSE;
+			GVL.BottomClamp:= FALSE;
 			BoxRefillState := 100;	
 		END_IF
 		
@@ -383,8 +389,12 @@ END_CASE]]></ST>
       <LineId Id="496" Count="0" />
       <LineId Id="498" Count="2" />
       <LineId Id="497" Count="0" />
-      <LineId Id="96" Count="3" />
-      <LineId Id="101" Count="2" />
+      <LineId Id="96" Count="2" />
+      <LineId Id="612" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="101" Count="1" />
+      <LineId Id="608" Count="0" />
+      <LineId Id="103" Count="0" />
       <LineId Id="108" Count="0" />
       <LineId Id="110" Count="2" />
       <LineId Id="375" Count="0" />
@@ -396,14 +406,18 @@ END_CASE]]></ST>
       <LineId Id="390" Count="2" />
       <LineId Id="120" Count="0" />
       <LineId Id="585" Count="2" />
-      <LineId Id="121" Count="8" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="123" Count="6" />
       <LineId Id="131" Count="11" />
       <LineId Id="397" Count="0" />
       <LineId Id="409" Count="0" />
+      <LineId Id="607" Count="0" />
       <LineId Id="143" Count="0" />
       <LineId Id="146" Count="0" />
       <LineId Id="155" Count="0" />
-      <LineId Id="159" Count="5" />
+      <LineId Id="159" Count="3" />
+      <LineId Id="606" Count="0" />
+      <LineId Id="163" Count="1" />
       <LineId Id="412" Count="2" />
       <LineId Id="165" Count="0" />
       <LineId Id="410" Count="0" />
@@ -446,10 +460,13 @@ END_CASE]]></ST>
       <LineId Id="252" Count="5" />
       <LineId Id="579" Count="0" />
       <LineId Id="258" Count="14" />
-      <LineId Id="274" Count="1" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="609" Count="0" />
+      <LineId Id="275" Count="0" />
       <LineId Id="376" Count="0" />
       <LineId Id="380" Count="0" />
       <LineId Id="383" Count="1" />
+      <LineId Id="610" Count="1" />
       <LineId Id="381" Count="1" />
       <LineId Id="378" Count="0" />
       <LineId Id="9" Count="0" />
