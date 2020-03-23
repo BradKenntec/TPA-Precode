@@ -81,9 +81,10 @@ VAR
 	DoubleLoop: INT;
 	Blast: BOOL;
 	Cali: INT	 :=0;
-	Velocity 				:LREAL :=1000;
+	Velocity 				:LREAL :=800;
 	ErrorID1		        : UDINT;
 	
+	Pig: BOOL;
 END_VAR
 VAR PERSISTENT				/////////////////////////////////////////
 	
@@ -112,15 +113,15 @@ END_VAR]]></Declaration>
 	Execute:= StackStepperRun, 
 	Position:= StackStepperPosition, 
 	Velocity:= StackStepperVelocity, 
-	Acceleration:= 7555.57, 
-	Deceleration:= 7555.57, 
-	Jerk:= 32111.1,
+	Acceleration:= 2518.53, 
+	Deceleration:= 2518.53, 
+	Jerk:= 10703.7,
 	Done=> StackStepperAbsoluteDone, );
 	
 HaltStackStepper(
 	Axis:= GVL.StackStepper, 
 	Execute:= StackStepperHalt, 
-	Deceleration:= 7555.57,  
+	Deceleration:= 2518.53,  
 	Done=> StackStepperHaltDone,
 	ErrorID=> ErrorID1, );
 	
@@ -200,7 +201,7 @@ CASE PlixHandlerState OF
 	11://home bottom sensor
 		StackStepperZeroPosition := FALSE;
 		IF  BottomEndStop THEN//if not blocked drive down till blocked
-			StackStepperPosition := -5000;
+			StackStepperPosition := -50000;
 			StackStepperVelocity := 100;
 			StackStepperRun := TRUE;
 		ELSE 
@@ -442,8 +443,10 @@ CASE PlixHandlerState OF
 	//////////////////////////////////////////////////
 		
 	2000:
-		IF GVL.ArduinoBusyBit THEN
+		IF GVL.ArduinoBusyBit AND GVL.PlixRequest THEN //AND Pig THEN
 			GVL.FanDyno := 74;
+			Pig := FALSE;
+			GVL.PlixRequest := FALSE;
 			GVL.ArduinoState := FanGo;
 			PlixHandlerState:=2200;
 		END_IF
@@ -458,10 +461,11 @@ CASE PlixHandlerState OF
 	2300:
 		IF GVL.ArduinoBusyBit THEN
 			GVL.PlixShooter :=TRUE;
+			GVL.PlixRequest := FALSE;
 			PlixHandlerState := 2400;
 		END_IF
 	2400:
-		Delay(IN:=TRUE, PT:=T#300MS);
+		Delay(IN:=TRUE, PT:=T#150MS);
 		IF Delay.Q THEN
         	Delay(IN:=FALSE);
         	PlixHandlerState := 2500;
@@ -477,6 +481,12 @@ CASE PlixHandlerState OF
 		IF Delay.Q THEN
         	Delay(IN:=FALSE);
 			GVL.PlixShooter :=FALSE;
+        	PlixHandlerState := 2700;
+    	END_IF
+	2700:
+		Delay(IN:=TRUE, PT:=T#2000MS);
+		IF Delay.Q THEN
+        	Delay(IN:=FALSE);
         	PlixHandlerState := 2800;
     	END_IF
 	2800:
@@ -719,17 +729,26 @@ END_CASE]]></ST>
       <LineId Id="1200" Count="0" />
       <LineId Id="767" Count="0" />
       <LineId Id="151" Count="0" />
-      <LineId Id="724" Count="5" />
+      <LineId Id="724" Count="3" />
+      <LineId Id="1534" Count="0" />
+      <LineId Id="1532" Count="0" />
+      <LineId Id="728" Count="1" />
       <LineId Id="679" Count="0" />
       <LineId Id="521" Count="0" />
       <LineId Id="704" Count="1" />
       <LineId Id="522" Count="5" />
       <LineId Id="680" Count="0" />
-      <LineId Id="528" Count="1" />
+      <LineId Id="528" Count="0" />
+      <LineId Id="1531" Count="0" />
+      <LineId Id="529" Count="0" />
       <LineId Id="681" Count="0" />
       <LineId Id="530" Count="6" />
       <LineId Id="682" Count="0" />
       <LineId Id="537" Count="10" />
+      <LineId Id="1535" Count="0" />
+      <LineId Id="1537" Count="2" />
+      <LineId Id="1541" Count="0" />
+      <LineId Id="1536" Count="0" />
       <LineId Id="641" Count="2" />
       <LineId Id="888" Count="0" />
       <LineId Id="891" Count="1" />

@@ -37,8 +37,8 @@ VAR_GLOBAL
 		//Outputs
 
 
-PlixShooter			: BOOL;	//Pin
-StackBlast			: BOOL;	//Pin
+PlixShooter			: BOOL;	//Pin34
+StackBlast			: BOOL;	//Pin36
 DoubleJets			: BOOL;	//Pin
 CarriageWaitRam		: BOOL;	//Pin24
 CarriageRam			: BOOL;	//Pin26
@@ -59,6 +59,8 @@ o4					: BOOL;	//Pin3
 	StackStepper : axis_ref;
 
 	PlixInBox: BOOL;
+	o1: BOOL;
+	PlixRequest: BOOL := FALSE;
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

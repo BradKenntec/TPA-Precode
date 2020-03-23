@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.2">
   <POU Name="POU" Id="{52aa0559-33a0-4d96-a025-90b91128d749}" SpecialFunc="None">
-    <Declaration><![CDATA[FUNCTION_BLOCK POU
+    <Declaration><![CDATA[ FUNCTION_BLOCK POU
 VAR_INPUT
 	go 								:	BOOL;
 END_VAR
@@ -10,7 +10,6 @@ END_VAR
 VAR
 	//STATES				/////////////////////////////////////////
 		BoxRemoved						: BOOL;
-		PlixRequest						: BOOL;
 		BoxGrabbed						: BOOL;
 		BoxRemoverState					: INT;
 		BoxReady						: BOOL;
@@ -53,23 +52,26 @@ VAR
 			
 			
 	//TIME					/////////////////////////////////////////
+		Delay							:TIME := T#2000MS;
 		BoxCartTimer					: TON;
 		BoxCartHomeTimer					: TON;
 		GripperTimer					: TON;
-		GripperTime						: TIME := T#5000MS;
-		BoxCartTime						: TIME := T#8000MS;
+		GripperTime						: TIME := Delay;
+		BoxCartTime						: TIME := Delay + T#2000MS;
 		FlapResetTimer					: TON;
-		FlapResetTime					: TIME := T#5000MS;
+		FlapResetTime					: TIME := Delay;
 		BoxDropTimer					: TON;
-		BoxDropTime						: TIME := T#5000MS;
+		BoxDropTime						: TIME := Delay;
 		PlixFlightTimer 				: TON;
-		PlixFlightTime 					: TIME := T#5000MS;
+		PlixFlightTime 					: TIME := Delay + T#2000MS;
 		DownTimer						: TON;
-		DownTime	 					: TIME := T#10000MS;
+		DownTime	 					: TIME := Delay + Delay;
 		GetterTimer						: TON;
-		GetterTime	 					: TIME := T#5000MS;
+		GetterTime	 					: TIME := Delay;
 		BoxRemovedTimer					: TON;
-		BoxRemovedTime	 				: TIME := T#8000MS;
+		BoxRemovedTime	 				: TIME := Delay + T#2000MS;
+		ConveyerTimer					: TON;
+		ConveyerTime	 				: TIME := Delay;
 	
 	
 		
@@ -100,7 +102,7 @@ BoxDropTimer(//boxes dropped onto the graber before its gripped and pulled off
 	PT := BoxDropTime,);
 	
 PlixFlightTimer(//time from the head shooting the plix to it landing in a box
-	IN := PlixRequest = FALSE,
+	IN := GVL.PlixRequest = FALSE,
 	PT := PlixFlightTime,);
 	
 GripperTimer(//time from the head shooting the plix to it landing in a box
@@ -114,17 +116,23 @@ BoxRemovedTimer(//time from the head shooting the plix to it landing in a box
 	IN := GVL.CarriageRam =FALSE,
 	PT := BoxRemovedTime,);
 	
-PlixSensor1		 	:= GVL.Sensors.3;
+ConveyerTimer(//time from the head shooting the plix to it landing in a box
+	IN := GVL.CarriageWaitRam = TRUE,
+	PT := ConveyerTime,);
+	
+PlixSensor1		 	:= GVL.Sensors.3;//angle one
 PlixSensor2 		:= GVL.Sensors.5;
 MainStackFull 		:= GVL.Sensors.1;
 SecondaryStackFull 	:= GVL.Sensors.0;
 LastBoxGone 		:= GVL.Sensors.2;
 BoxGrabberUp 		:= GVL.Sensors2.6;
 BoxGrabberDown		:= GVL.Sensors.4;
-FlapFolder1Up		:= GVL.Sensors2.2;
-FlapFolder1Down		:= GVL.Sensors2.3;
-FlapFolder2Up 		:= GVL.Sensors2.4;
-FlapFolder2Down 	:= GVL.Sensors2.5;
+
+
+FlapFolder1Up		:= GVL.Sensors2.4;
+FlapFolder1Down		:= GVL.Sensors2.5;
+FlapFolder2Up 		:= GVL.Sensors2.2;
+FlapFolder2Down 	:= GVL.Sensors2.3;
 CarriageAtPickUp 	:= GVL.Sensors.6;
 CarriageAtDrop 		:= GVL.Sensors.7;
 	
@@ -140,11 +148,12 @@ CASE BoxLoaderState OF
 		//GVL.BottomClamp := TRUE;
 		BoxLoaderState := 110;
 	110:
-		IF NOT LastBoxGone OR SkipStackLoad THEN 
+		IF (NOT LastBoxGone OR NOT MainStackFull) OR SkipStackLoad THEN 
 			//GVL.TopClamp := FALSE;
 			StackReadyToDrop := TRUE;
 			BoxLoaderState := 200;
-		ELSIF LastBoxGone AND NOT SkipStackLoad THEN
+		ELSIF LastBoxGone AND MainStackFull AND NOT SkipStackLoad THEN
+			StackReadyToDrop := FALSE;
 			BoxLoaderState := 200;
 		END_IF
 	200:// if we have boxes in the cart and there are no boxes in the machine and clamp is open we move the stack over
@@ -195,7 +204,7 @@ CASE FlapFolderState OF
 			FlapFolderState := 210;
 		END_IF
 	210: 
-		IF  StackReadyToDrop AND BoxGrabberUp THEN //NOT MainStackFull AND //if theres no boxes we say no boxes and wait for that to be sorted
+		IF  StackReadyToDrop AND BoxGrabberUp AND (NOT LastBoxGone OR NOT MainStackFull) THEN //NOT MainStackFull AND //if theres no boxes we say no boxes and wait for that to be sorted
 			BoxStackNeeded := TRUE;
 			GVL.BottomClamp := TRUE;//drops the boxes on to the gripper
 			GVL.TopClamp := TRUE;
@@ -227,18 +236,18 @@ CASE FlapFolderState OF
 	600:
 		IF (NOT BoxGrabberDown OR DryRun) AND DownTimer.Q THEN
 			GVL.FlapFolder1 := TRUE;
-			PlixRequest := TRUE;//must be set false in plix handler aftr shot
+			//GVL.PlixRequest := TRUE;//must be set false in plix handler aftr shot
 			FlapFolderState := 610;
 		END_IF
 		
 	610:
-		IF FlapFolder1Down THEN
-			PlixRequest := TRUE;
+		IF NOT FlapFolder1Down THEN
+			GVL.PlixRequest := TRUE;
 			FlapFolderState :=710;
 		END_IF
 		
 	710:
-		IF NOT PlixRequest OR DryRun THEN//////////////////////////////////////dry run needs removing
+		IF NOT GVL.PlixRequest OR DryRun THEN//////////////////////////////////////dry run needs removing
 			//plix has been shot by plix head 
 			FlapFolderState := 720;
 		END_IF
@@ -323,12 +332,13 @@ CASE BoxRemoverState OF
 		
 	600:
 		IF CarriageAtDrop AND BoxDropRequest OR DryRun THEN
-			GVL.CarriageWaitRam := TRUE;
+			GVL.CarriageWaitRam := TRUE; 
 			BoxRemoverState := 700;
 		END_IF
 	700:  
-		IF BoxDropped OR DryRun THEN
+		IF (BoxDropped OR DryRun) AND ConveyerTimer.Q THEN
 			BoxDelivered :=TRUE;
+			BoxDropped := FALSE;
 			BoxRemoverState := 100;
 			
 		END_IF
@@ -375,9 +385,15 @@ END_CASE]]></ST>
       <LineId Id="503" Count="0" />
       <LineId Id="505" Count="1" />
       <LineId Id="504" Count="0" />
+      <LineId Id="690" Count="0" />
+      <LineId Id="692" Count="1" />
+      <LineId Id="691" Count="0" />
       <LineId Id="89" Count="0" />
       <LineId Id="343" Count="0" />
-      <LineId Id="348" Count="10" />
+      <LineId Id="348" Count="5" />
+      <LineId Id="695" Count="0" />
+      <LineId Id="694" Count="0" />
+      <LineId Id="354" Count="4" />
       <LineId Id="344" Count="1" />
       <LineId Id="360" Count="1" />
       <LineId Id="346" Count="1" />
@@ -387,7 +403,9 @@ END_CASE]]></ST>
       <LineId Id="495" Count="0" />
       <LineId Id="507" Count="0" />
       <LineId Id="496" Count="0" />
-      <LineId Id="498" Count="2" />
+      <LineId Id="498" Count="1" />
+      <LineId Id="687" Count="0" />
+      <LineId Id="500" Count="0" />
       <LineId Id="497" Count="0" />
       <LineId Id="96" Count="2" />
       <LineId Id="612" Count="0" />
@@ -457,7 +475,9 @@ END_CASE]]></ST>
       <LineId Id="493" Count="0" />
       <LineId Id="492" Count="0" />
       <LineId Id="247" Count="3" />
-      <LineId Id="252" Count="5" />
+      <LineId Id="252" Count="4" />
+      <LineId Id="697" Count="0" />
+      <LineId Id="257" Count="0" />
       <LineId Id="579" Count="0" />
       <LineId Id="258" Count="14" />
       <LineId Id="274" Count="0" />

@@ -47,8 +47,8 @@ END_VAR
       <ST><![CDATA[
 //Arduino					/////////////////////////////////////////
 	//IO Setup
-GVL.OutArduino2.0 := GVL.PlixShooter;		//Pin22		16
-GVL.OutArduino2.1 := GVL.StackBlast;		//Pin23		14
+GVL.OutArduino2.0 := GVL.o1;				//Pin22		16
+GVL.OutArduino2.1 := GVL.o3;				//Pin23		14
 GVL.OutArduino2.2 := GVL.CarriageWaitRam;	//Pin24	 	9
 GVL.OutArduino2.3 := GVL.TopClamp;			//Pin25		2
 GVL.OutArduino2.4 := GVL.CarriageRam;		//Pin26		11
@@ -59,9 +59,9 @@ GVL.OutArduino3.7 := GVL.BoxCart;			//Pin30		1
 GVL.OutArduino3.6 := GVL.BottomClamp;		//Pin31		3
 GVL.OutArduino3.5 := GVL.BoxGrabber;		//Pin32		5
 GVL.OutArduino3.4 := GVL.FlapFolder1;		//Pin33		7
-GVL.OutArduino3.3 := GVL.BoxSizeAdjust;		//Pin34		13
+GVL.OutArduino3.3 := GVL.PlixShooter;		//Pin34		13
 GVL.OutArduino3.2 := GVL.o2;				//Pin35		1
-GVL.OutArduino3.1 := GVL.o3;				//Pin36		15
+GVL.OutArduino3.1 := GVL.StackBlast;		//Pin36		15
 GVL.OutArduino3.0 := GVL.o4;				//Pin37		1
 
 //PlixShooter			: BOOL;	//Pin
